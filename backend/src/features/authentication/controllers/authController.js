@@ -2,10 +2,16 @@ const validateRegistration = require("../validators/registerValidator");
 const { registerUser, 
         generateAndSendOTP,
         verifyOTP,
-        resendOTP
+        resendOTP,
+        loginUser,
+        generatePasswordResetOTP,
+        verifyPasswordResetOTP,
+        resetPassword
 } = require("../services/authService");
 
-//................................................
+const validateLogin = require("../validators/loginValidator")
+
+//-------------------------------------------------------
 //Register Control
 
 const register = async (req, res) => {
@@ -42,8 +48,8 @@ const register = async (req, res) => {
 };
 
 
-//..............................................................
-// Verify OTP entered by user.
+//--------------------------------------------------------
+// Verify Email OTP 
 
 const verifyEmailOTP = async (req, res) => {
     try 
@@ -104,8 +110,8 @@ const verifyEmailOTP = async (req, res) => {
 }
 
 
-//.....................................................
-// Resend the email verification OTP.
+//--------------------------------------------------------------
+// Resend Email OTP.
 
 const resendEmailOTP = async(req, res) => {
     try{
@@ -117,22 +123,256 @@ const resendEmailOTP = async(req, res) => {
                 message : "Email is required"
             })
         }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+        if (!emailRegex.test(email)) 
+        {
+            return res.status(400).json({
+                success: false,
+                message: "Please provide a valid email address"
+            })
+        }
+
         await resendOTP(email)
         return res.status(200).json({
             success : true,
             message : "A new OTP has been sent to your email"
         })
-    } catch(error) {
-        return res.status(400).json({
-            success : false,
-            message : error.message
+    } catch (error) 
+    {
+        if (error.message === "Registration session not found or expired. Please register again.") 
+        {
+            return res.status(404).json({
+                success: false,
+                message: error.message
+            })
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to resend OTP. Please try again later."
         })
     }
 }
 
-//..............................................
+
+//--------------------------------------------------------
+//Forgot Password -  requests and sends a reset OTP
+
+const forgotPassword = async (req, res) => {
+    try 
+    {
+        const { email } = req.body
+
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) 
+        {
+            return res.status(400).json({
+                success: false,
+                message: "Please provide a valid email address"
+            })
+        }
+
+        await generatePasswordResetOTP(email)
+
+        return res.status(200).json({
+            success: true,
+            message: "If the email is registered, a password reset OTP has been sent"
+        })
+    } catch (error) 
+    {
+        if (error.message === "This account was created using Google. Please manage your account through your Google Account.") 
+        {
+            return res.status(400).json({
+                success: false,
+                message: error.message
+            })
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to process password reset request"
+        })
+    }
+}
+
+
+
+//--------------------------------------------------------
+//Verify OTP - Password Reset
+
+const verifyPasswordReset = async (req, res) => {
+    try 
+    {
+        const { email, otp } = req.body
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !otp || !/^\d{6}$/.test(otp))
+        {
+            return res.status(400).json({
+                success: false,
+                message: "Valid email and 6-digit OTP are required"
+            })
+        }
+        await verifyPasswordResetOTP(email, otp)
+        return res.status(200).json({
+            success: true,
+            message: "OTP verified successfully"
+        })
+    } catch (error) 
+    {
+        const clientErrors = [
+            "Password reset OTP not found or expired",
+            "OTP has expired. Please request a new OTP.",
+            "Maximum OTP attempts reached. Please request a new OTP.",
+            "Invalid OTP",
+            "OTP has already been verified. Please reset your password."
+        ]
+
+        if (clientErrors.includes(error.message)) {
+            return res.status(400).json({
+                success: false,
+                message: error.message
+            })
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        })
+    }
+}
+
+
+//---------------------------------------------------------------
+//Password Reset after OTP verification.
+
+const  resetPasswordController = async (req, res) => {
+    try {
+        const { email, newPassword } = req.body
+
+        if (!email || !newPassword || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) 
+        {
+            return res.status(400).json({
+                success: false,
+                message: "Valid email and new password are required"
+            })
+        }
+
+        if (typeof newPassword !== "string" || newPassword.length < 8) 
+        {
+            return res.status(400).json({
+                success: false,
+                message: "Password must be at least 8 characters long"
+            })
+        }
+
+        await resetPassword(email, newPassword)
+
+        return res.status(200).json({
+            success: true,
+            message: "Password reset successful. Please login with your new password."
+        })
+    } catch (error) 
+    {
+        const clientErrors = [
+            "Please verify your password reset OTP first",
+            "Password reset session has expired. Please request a new OTP.",
+            "User not found",
+            "This account was created using Google. Please manage your account through your Google Account."
+        ]
+
+        if(clientErrors.includes(error.message)) {
+            return res.status(400).json({
+                success: false,
+                message: error.message
+            })
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        })
+    }
+}
+
+
+//---------------------------------------------------------------
+//User login and sends the JWT through a secure HttpOnly cookie.
+
+const login = async (req, res) => {
+    try 
+    {
+        const validationError = validateLogin(req.body || {})
+        if (validationError) 
+        {
+            return res.status(400).json({
+                success: false,
+                message: validationError
+            })
+        }
+
+        const { email, password } = req.body
+        const { user, token } = await loginUser(email, password)
+
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 24 * 60 * 60 * 1000
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Login successful",
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                role: user.role
+            }
+        })
+    } catch (error) 
+    {
+        if (error.message === "Invalid email or password") 
+        {
+            return res.status(401).json({
+                success: false,
+                message: error.message
+            })
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        })
+    }
+}
+
+//--------------------------------------------------------
+//Logout the user
+
+const logout = (req, res) => {
+    res.clearCookie("token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict"
+    })
+
+    return res.status(200).json({
+        success: true,
+        message: "Logout successful"
+    })
+}
+
+
+//--------------------------------------------------------
 module.exports = { 
     register,
     verifyEmailOTP,
-    resendEmailOTP
+    resendEmailOTP,
+    login,
+    logout,
+    forgotPassword,
+    verifyPasswordReset,
+    resetPasswordController
 };
