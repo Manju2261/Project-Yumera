@@ -3,8 +3,9 @@ const validateRegistration = ({ name, email, phone, password }) => {
         return "All fields are required";
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        return "Invalid email address";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) 
+    {
+        return "Invalid email address"
     }
 
     if (password.length < 8) {

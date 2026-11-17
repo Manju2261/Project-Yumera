@@ -7,12 +7,13 @@ const emailTransporter = require("../../../config/email")
 //------------------------------------------------
 
 // Generates a secure random 6-digit OTP.
+//Generate OTP
 
 const generateOTP = () => {
     return crypto.randomInt(100000, 1000000).toString()
 }
 
-
+//------------------------------------------
 // Hash OTP.
 
 const hashOTP = async (otp) => {
@@ -20,7 +21,7 @@ const hashOTP = async (otp) => {
 }
 const MAX_OTP_ATTEMPTS = 3;
 
-
+//------------------------------------------
 // Store the hashed OTP & expiration time in MongoDB
 
 const storeOTP = async (email, otp, registrationData) => {
@@ -39,7 +40,7 @@ const storeOTP = async (email, otp, registrationData) => {
     )
 }
 
-
+//----------------------------------------------------
 // Sends the generated OTP to the user's email address using Nodemailer.
 
 const sendOTPEmail = async(email, otp) => {
@@ -57,7 +58,7 @@ const sendOTPEmail = async(email, otp) => {
     })
 }
 
-
+//--------------------------------------------------------
 // Generates an OTP, stores its hashed value in MongoDB, and send to the user's email.
 
 const generateAndSendOTP = async(email, userData) => {
@@ -76,17 +77,57 @@ const generateAndSendOTP = async(email, userData) => {
         passwordHash
     }
     
+    // Stores the OTP and removes it if sending the email fails.
     await storeOTP(normalizedEmail, otp, registrationData)
-    await sendOTPEmail(normalizedEmail, otp)
+    try{
+        await sendOTPEmail(normalizedEmail, otp)
+    }catch(error) {
+        await EmailOTP.deleteOne({email : normalizedEmail})
+        throw new Error("Failed to send OTP email. Please try again")
+    }
+    
 }
 
 
 //------------------------------------------------------
+// Generates and sends a new OTP for an pending registration.
 
+const resendOTP = async (email)=> {
+    const normalizedEmail = email.trim().toLowerCase()
+    const otpRecord = await EmailOTP.findOne({
+        email : normalizedEmail
+    })
+
+    if(!otpRecord)
+    {
+        throw new Error("Registration session not found or expired. Please register again.")
+    }
+    const otp = generateOTP()
+    const otpHash = await hashOTP(otp)
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000)
+    
+    try{
+        await sendOTPEmail(normalizedEmail, otp)
+
+        otpRecord.otpHash = otpHash
+        otpRecord.expiresAt = expiresAt
+        otpRecord.attempts = 0
+
+        await otpRecord.save()
+    }catch (error) {
+    console.error("Resend OTP Error:", error)
+    throw new Error("Failed to resend OTP. Please try again.")
+}
+
+}
+
+
+//------------------------------------------------------
 // Verify OTP, checks expiration and blocks after 3 incorrect attempts.
 
 const verifyOTP = async (email, enteredOTP) => {
-    const otpRecord = await EmailOTP.findOne({ email })
+    const normalizedEmail = email.trim().toLowerCase()
+    const otpRecord = await EmailOTP.findOne({ email : normalizedEmail })
 
     if (!otpRecord) 
     {
@@ -95,7 +136,7 @@ const verifyOTP = async (email, enteredOTP) => {
 
     if (otpRecord.expiresAt < new Date()) 
     {
-        await EmailOTP.deleteOne({ email })
+        await EmailOTP.deleteOne({ email : normalizedEmail })
         throw new Error("OTP has expired")
     }
 
@@ -116,7 +157,7 @@ const verifyOTP = async (email, enteredOTP) => {
 
     // Delete used OTP & returns the details.
     const registrationData = otpRecord.registrationData
-    await EmailOTP.deleteOne({email})
+    await EmailOTP.deleteOne({email : normalizedEmail})
     return registrationData
 }
 
@@ -135,11 +176,13 @@ const registerUser = async (userData) => {
         throw new Error("Email already registered")
     }
 
+    // Creates a verified user after successful email OTP verification.
     const user = await User.create({
         name,
         email : normalizedEmail,
         phone,
-        password : passwordHash
+        password : passwordHash,
+        isVerified : true
     });
 
     return user;
@@ -150,5 +193,6 @@ const registerUser = async (userData) => {
 module.exports = { 
     registerUser,
     generateAndSendOTP, 
-    verifyOTP    
+    verifyOTP,
+    resendOTP   
  };

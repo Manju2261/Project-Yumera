@@ -2,10 +2,10 @@ const validateRegistration = require("../validators/registerValidator");
 const { registerUser, 
         generateAndSendOTP,
         verifyOTP,
+        resendOTP
 } = require("../services/authService");
 
 //................................................
-
 //Register Control
 
 const register = async (req, res) => {
@@ -43,8 +43,7 @@ const register = async (req, res) => {
 
 
 //..............................................................
-
-// Verifies the OTP entered by the user.
+// Verify OTP entered by user.
 
 const verifyEmailOTP = async (req, res) => {
     try 
@@ -89,19 +88,51 @@ const verifyEmailOTP = async (req, res) => {
         })
     }catch (error)
     {
-        // Returns 409 for duplicate emails and 400 for other verification errors.
-        const statusCode = error.message === "Email already registered" ? 409 : 400
+        // Handles MongoDB duplicate key error (11000) duplicate email(409), client-side and unexpected server errors.
+        const statusCode = 
+            error.code === 11000 ? 409 :
+            error.message === "OTP not found or expired" ||
+            error.message === "OTP has expired" ||
+            error.message === "Invalid OTP" ||
+            error.message === "Maximum OTP attempts exceeded. Please request a new OTP." ? 400 : 500
 
         return res.status(statusCode).json({
             success: false,
-            message: error.message
+            message: statusCode === 500 ? "Email verification failed" : error.message
         })
     }
 }
 
-//.....................................................
 
+//.....................................................
+// Resend the email verification OTP.
+
+const resendEmailOTP = async(req, res) => {
+    try{
+        const {email} = req.body
+        if(!email)
+        {
+            return res.status(400).json({
+                success : false,
+                message : "Email is required"
+            })
+        }
+        await resendOTP(email)
+        return res.status(200).json({
+            success : true,
+            message : "A new OTP has been sent to your email"
+        })
+    } catch(error) {
+        return res.status(400).json({
+            success : false,
+            message : error.message
+        })
+    }
+}
+
+//..............................................
 module.exports = { 
     register,
-    verifyEmailOTP 
+    verifyEmailOTP,
+    resendEmailOTP
 };
