@@ -6,10 +6,16 @@ const { registerUser,
         loginUser,
         generatePasswordResetOTP,
         verifyPasswordResetOTP,
-        resetPassword
+        resetPassword,
+        verifyGoogleToken,
+        refreshUserAccessToken,
+        logoutUser
 } = require("../services/authService");
 
 const validateLogin = require("../validators/loginValidator")
+const User = require("../models/User")
+const jwt = require("jsonwebtoken")
+
 
 //-------------------------------------------------------
 //Register Control
@@ -296,7 +302,7 @@ const  resetPasswordController = async (req, res) => {
 
 
 //---------------------------------------------------------------
-//User login and sends the JWT through a secure HttpOnly cookie.
+//Login - Local User and sends the JWT through a secure HttpOnly cookie.
 
 const login = async (req, res) => {
     try 
@@ -311,13 +317,22 @@ const login = async (req, res) => {
         }
 
         const { email, password } = req.body
-        const { user, token } = await loginUser(email, password)
+        const { user, token, refreshToken } = await loginUser(email, password)
 
-        res.cookie("token", token, {
+        // Stores the Access Token in an HttpOnly cookie.
+        res.cookie("accessToken", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-            maxAge: 24 * 60 * 60 * 1000
+            sameSite: "lax",
+            maxAge: 15 * 60 * 1000
+        })
+
+        // Stores the Refresh Token in an HttpOnly cookie.
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000
         })
 
         return res.status(200).json({
@@ -341,6 +356,14 @@ const login = async (req, res) => {
             })
         }
 
+        if (error.message === "Your account has been blocked. Please contact support.") 
+        {
+            return res.status(403).json({
+                success: false,
+                message: error.message
+            })
+        }
+
         return res.status(500).json({
             success: false,
             message: "Internal server error"
@@ -348,20 +371,155 @@ const login = async (req, res) => {
     }
 }
 
+
+//------------------------------------------------------------------
+//Login - Google User
+
+const googleLogin = async (req, res) => {
+    try 
+    {
+        const { idToken } = req.body
+
+        if (!idToken) {
+            return res.status(400).json({
+                success: false,
+                message: "Google ID token is required"
+            })
+        }
+
+        const googleUser = await verifyGoogleToken(idToken)
+
+        if (!googleUser.isVerified) {
+            return res.status(401).json({
+                success: false,
+                message: "Google email is not verified"
+            })
+        }
+
+        const user = await User.findOne({ email: googleUser.email })
+
+        if (user && user.authProvider !== "google") {
+            return res.status(409).json({
+                success: false,
+                message: "This email is already registered. Please login using your email and password."
+            })
+        }
+
+        const googleAccount = user || await User.create({
+            name: googleUser.name,
+            email: googleUser.email,
+            authProvider: "google",
+            isVerified: true
+        })
+
+        const token = jwt.sign(
+            { id: googleAccount._id },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
+        )
+
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 24 * 60 * 60 * 1000
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Google login successful",
+            user: {
+                id: googleAccount._id,
+                name: googleAccount.name,
+                email: googleAccount.email,
+                role: googleAccount.role
+            }
+        })
+    } catch (error) {
+        return res.status(401).json({
+            success: false,
+            message: "Google authentication failed"
+        })
+    }
+}
+
+
 //--------------------------------------------------------
 //Logout the user
 
-const logout = (req, res) => {
-    res.clearCookie("token", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict"
-    })
+const logout = async (req, res) => {
+    try {
+        const refreshToken = req.cookies?.refreshToken
 
-    return res.status(200).json({
-        success: true,
-        message: "Logout successful"
-    })
+        await logoutUser(refreshToken)
+
+        res.clearCookie("accessToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax"
+        })
+
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax"
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Logged out successfully"
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Logout failed"
+        })
+    }
+}
+
+
+//--------------------------------------------------------
+// Generates a new Access Token using the Refresh Token cookie.
+
+const refreshUserTokenController = async (req, res) => {
+    try {
+        const refreshToken = req.cookies?.refreshToken
+
+        if (!refreshToken) {
+            return res.status(401).json({
+                success: false,
+                message: "Refresh token required. Please login again."
+            })
+        }
+
+        const { accessToken, refreshToken: newRefreshToken } =
+            await refreshUserAccessToken(refreshToken)
+
+        res.cookie("accessToken", accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 15 * 60 * 1000
+        })
+
+        res.cookie("refreshToken", newRefreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Access and refresh tokens refreshed successfully"
+        })
+    } catch (error) {
+        console.error("Refresh Token Error:", error)
+        return res.status(401).json({
+            success: false,
+            message: "Invalid or expired refresh token. Please login again."
+        })
+    }
 }
 
 
@@ -371,8 +529,10 @@ module.exports = {
     verifyEmailOTP,
     resendEmailOTP,
     login,
+    googleLogin,
     logout,
     forgotPassword,
     verifyPasswordReset,
-    resetPasswordController
+    resetPasswordController,
+    refreshUserTokenController
 };

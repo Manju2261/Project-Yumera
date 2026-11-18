@@ -19,13 +19,17 @@ const userSchema = new mongoose.Schema(
         
         phone: {
             type: String,
-            required: true,
+            required: function () {
+                return this.authProvider === "local"
+            },
             trim: true,
         },
 
         password: {
             type: String,
-            required: true,
+            required: function () {
+                return this.authProvider === "local"
+            },
             select: false,
         },
 
@@ -33,6 +37,11 @@ const userSchema = new mongoose.Schema(
             type: String,
             enum: ["user", "admin"],
             default: "user",
+        },
+
+        isBlocked : {
+            type : Boolean,
+            default : false
         },
 
         isVerified: {
@@ -44,6 +53,13 @@ const userSchema = new mongoose.Schema(
             type: String,
             enum: ["local", "google"],
             default: "local"
+        },
+
+        refreshTokenHash: 
+        {
+            type: String,
+            default: null,
+            select: false
         },
     },
     { timestamps: true }

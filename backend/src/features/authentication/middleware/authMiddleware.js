@@ -3,9 +3,9 @@ const jwt = require("jsonwebtoken")
 const User = require("../models/User")
 
 const authMiddleware = async (req, res, next) => {
-    const token = req.cookies?.token
+    const accessToken = req.cookies?.accessToken
 
-    if (!token) 
+    if (!accessToken) 
     {
         return res.status(401).json({
             success: false,
@@ -17,7 +17,10 @@ const authMiddleware = async (req, res, next) => {
 
     try 
     {
-        decoded = jwt.verify(token, process.env.JWT_SECRET)
+        decoded = jwt.verify(
+            accessToken,
+            process.env.ACCESS_TOKEN_SECRET
+        )
     } catch (error) {
         return res.status(401).json({
             success: false,
@@ -34,6 +37,14 @@ const authMiddleware = async (req, res, next) => {
             return res.status(401).json({
                 success: false,
                 message: "User not found. Please login again."
+            })
+        }
+
+        if (user.isBlocked) 
+        {
+            return res.status(403).json({
+                success: false,
+                message: "Your account has been blocked. Please contact support."
             })
         }
 

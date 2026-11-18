@@ -5,6 +5,8 @@ const crypto = require("crypto")
 const emailTransporter = require("../../../config/email")
 const jwt = require("jsonwebtoken")
 const PasswordResetOTP =require("../models/PasswordResetOTP")
+const { OAuth2Client } = require("google-auth-library")
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
 //------------------------------------------------
 
@@ -56,6 +58,7 @@ const sendOTPEmail = async (email, otp, subject = "YUMERA - Email Verification O
         ? "Use the OTP below to reset your YUMERA account password."
         : "Use the OTP below to verify your email address."
 
+    // Sends the OTP email and logs the SMTP delivery response.
     await emailTransporter.sendMail({
         from: process.env.EMAIL_USER,
         to: email,
@@ -68,6 +71,7 @@ const sendOTPEmail = async (email, otp, subject = "YUMERA - Email Verification O
             <p>Please do not share this OTP with anyone.</p>
         `
     })
+
 }
 
 //--------------------------------------------------------
@@ -376,17 +380,146 @@ const registerUser = async (userData) => {
     return user;
 };
 
-    
+
+
+// -----------------------------------------------------
+//Verify Google ID Token
+
+const verifyGoogleToken = async (idToken) => {
+    const ticket = await googleClient.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_ID
+    })
+
+    const payload = ticket.getPayload()
+
+    return {
+        googleId: payload.sub,
+        name: payload.name,
+        email: payload.email,
+        isVerified: payload.email_verified,
+        picture: payload.picture
+    }
+}
+
+ 
 // -------------------------------------------------
-//Generates a JWT token after successful login.
+// Generates an Access Token.
+
+const generateAccessToken = (userId) => {
+    return jwt.sign(
+        { id: userId },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN }
+    )
+}
+
+// Generates a Refresh Token.
+
+const generateRefreshToken = (userId) => {
+    return jwt.sign(
+        { id: userId },
+        process.env.REFRESH_TOKEN_SECRET,
+        { expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN }
+    )
+}
+
+// Hashes the Refresh Token before storing it in the database.
+const hashRefreshToken = (refreshToken) => {
+    return crypto
+        .createHash("sha256")
+        .update(refreshToken)
+        .digest("hex")
+}
+
+
+// -------------------------------------------------
+// Generates new Access and Refresh Tokens using a valid Refresh Token.
+
+const refreshUserAccessToken = async (refreshToken) => {
+    const decoded = jwt.verify(
+        refreshToken,
+        process.env.REFRESH_TOKEN_SECRET
+    )
+
+    const user = await User.findById(decoded.id)
+        .select("+refreshTokenHash")
+
+    if (!user || user.isBlocked || !user.refreshTokenHash) {
+        throw new Error("Invalid refresh token")
+    }
+
+    const hashedToken = hashRefreshToken(refreshToken)
+
+    if (hashedToken !== user.refreshTokenHash) {
+        throw new Error("Invalid refresh token")
+    }
+
+    const newAccessToken = generateAccessToken(user._id)
+    const newRefreshToken = generateRefreshToken(user._id)
+
+    user.refreshTokenHash = hashRefreshToken(newRefreshToken)
+    await user.save()
+
+    return {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken
+    }
+}
+
+
+// -------------------------------------------------
+// Revokes the user's Refresh Token during logout.
+
+const logoutUser = async (refreshToken) => {
+    if (!refreshToken) {
+        return
+    }
+
+    try {
+        const decoded = jwt.verify(
+            refreshToken,
+            process.env.REFRESH_TOKEN_SECRET
+        )
+
+        const user = await User.findById(decoded.id)
+            .select("+refreshTokenHash")
+
+        if (!user) {
+            return
+        }
+
+        const hashedToken = hashRefreshToken(refreshToken)
+
+        if (hashedToken === user.refreshTokenHash) {
+            user.refreshTokenHash = null
+            await user.save()
+        }
+    } catch (error) {
+        // Invalid or expired refresh tokens cannot be reused.
+        return
+    }
+}
+
+
+// -------------------------------------------------
+//Login User.
 
 const loginUser = async (email, password) => {
     const normalizedEmail = email.trim().toLowerCase()
-    const user = await User.findOne({ email: normalizedEmail }).select("+password")
-    
+
+    const user = await User.findOne({
+        email: normalizedEmail
+    }).select("+password")
+
     if (!user) 
     {
         throw new Error("Invalid email or password")
+    }
+
+    if (user.isBlocked) 
+    {
+        throw new Error("Your account has been blocked. Please contact support.")
     }
 
     const isPasswordMatch = await bcrypt.compare(password, user.password)
@@ -396,13 +529,19 @@ const loginUser = async (email, password) => {
         throw new Error("Invalid email or password")
     }
 
-    const token = jwt.sign(
-        { id: user._id },
-        process.env.JWT_SECRET,
-        { expiresIn: "1d" }
-    )
-    return { user, token }
+    const accessToken = generateAccessToken(user._id)
+    const refreshToken = generateRefreshToken(user._id)
+
+    user.refreshTokenHash = hashRefreshToken(refreshToken)
+    await user.save()
+
+    return {
+        user,
+        token: accessToken,
+        refreshToken
+    }
 }
+
 
 //--------------------------------------------------
 
@@ -414,5 +553,8 @@ module.exports = {
     loginUser,
     generatePasswordResetOTP,
     verifyPasswordResetOTP,
-    resetPassword
+    resetPassword,
+    verifyGoogleToken,
+    refreshUserAccessToken,
+    logoutUser
  };

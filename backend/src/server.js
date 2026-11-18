@@ -6,6 +6,8 @@ const cors = require("cors")
 
 const connectDB = require("./config/db");
 const authRoutes = require("./features/authentication/routes/authRoutes");
+const adminAuthRoutes = require("./features/admin/adminRoutes/adminAuthRoutes")
+const adminUserRoutes = require("./features/admin/adminRoutes/adminUserRoutes")
 
 const app = express();
 
@@ -16,6 +18,8 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser())
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminAuthRoutes)
+app.use("/api/admin/users", adminUserRoutes)
 
 app.get("/", (req, res) => {
     res.status(200).json({
