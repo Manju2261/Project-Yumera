@@ -1,4 +1,12 @@
 const validateUserAddress = (addressData, isUpdate = false) => {
+    if (
+        !addressData ||
+        typeof addressData !== "object" ||
+        Array.isArray(addressData)
+    ) {
+        return "Invalid address data"
+    }
+    
     const requiredFields = [
         "fullName",
         "phone",

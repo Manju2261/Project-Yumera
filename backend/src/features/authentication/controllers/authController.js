@@ -1,20 +1,21 @@
 const validateRegistration = require("../validators/registerValidator");
 const { registerUser, 
+        generateEmailChangeOTP,
         generateAndSendOTP,
+        verifyEmailChangeOTP,
         verifyOTP,
         resendOTP,
         loginUser,
         generatePasswordResetOTP,
         verifyPasswordResetOTP,
         resetPassword,
-        verifyGoogleToken,
+        loginWithGoogle,
         refreshUserAccessToken,
-        logoutUser
+        logoutUser,
+        changePasswordService
 } = require("../services/authService");
 
 const validateLogin = require("../validators/loginValidator")
-const User = require("../models/User")
-const jwt = require("jsonwebtoken")
 
 
 //-------------------------------------------------------
@@ -104,7 +105,7 @@ const verifyEmailOTP = async (req, res) => {
         const statusCode = 
             error.code === 11000 ? 409 :
             error.message === "OTP not found or expired" ||
-            error.message === "OTP has expired" ||
+            error.message === "OTP has expired. Please request a new OTP."||
             error.message === "Invalid OTP" ||
             error.message === "Maximum OTP attempts exceeded. Please request a new OTP." ? 400 : 500
 
@@ -132,7 +133,7 @@ const resendEmailOTP = async(req, res) => {
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-        if (!emailRegex.test(email)) 
+        if (!emailRegex.test(email.trim())) 
         {
             return res.status(400).json({
                 success: false,
@@ -161,6 +162,69 @@ const resendEmailOTP = async(req, res) => {
         })
     }
 }
+
+
+//------------------------------------------------------------------
+// Send Email Change OTP
+
+const requestEmailChangeController = async (req, res) => {
+    try {
+        const { newEmail } = req.body;
+
+        if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail.trim())) {
+            return res.status(400).json({
+                success: false,
+                message: "Please enter a valid email"
+            });
+        }
+
+        await generateEmailChangeOTP(req.user._id, newEmail);
+
+        return res.status(200).json({
+            success: true,
+            message: "OTP sent to your new email"
+        });
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+
+//-----------------------------------------------------------------
+// Verify Email Change OTP
+
+const verifyEmailChangeController = async (req, res) => {
+    try {
+        const { otp } = req.body;
+
+        if (!otp || !/^\d{6}$/.test(otp)) {
+            return res.status(400).json({
+                success: false,
+                message: "Please enter a valid 6-digit OTP"
+            });
+        }
+
+        const user = await verifyEmailChangeOTP(req.user._id, otp);
+
+        return res.status(200).json({
+            success: true,
+            message: "Email updated successfully",
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email
+            }
+        });
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
 
 
 //--------------------------------------------------------
@@ -301,6 +365,40 @@ const  resetPasswordController = async (req, res) => {
 }
 
 
+//--------------------------------------------------------------
+// Change Password
+
+// Change Password
+const changePasswordController = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword || newPassword.length < 8) {
+            return res.status(400).json({
+                success: false,
+                message: "Current password and a new password of at least 8 characters are required"
+            });
+        }
+
+        await changePasswordService(
+            req.user._id,
+            currentPassword,
+            newPassword
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: "Password changed successfully. Please login again."
+        });
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+
 //---------------------------------------------------------------
 //Login - Local User and sends the JWT through a secure HttpOnly cookie.
 
@@ -356,6 +454,15 @@ const login = async (req, res) => {
             })
         }
 
+        if (
+            error.message === "This account was created using Google. Please login using Google."
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: error.message
+            })
+        }
+
         if (error.message === "Your account has been blocked. Please contact support.") 
         {
             return res.status(403).json({
@@ -376,8 +483,7 @@ const login = async (req, res) => {
 //Login - Google User
 
 const googleLogin = async (req, res) => {
-    try 
-    {
+    try {
         const { idToken } = req.body
 
         if (!idToken) {
@@ -387,61 +493,68 @@ const googleLogin = async (req, res) => {
             })
         }
 
-        const googleUser = await verifyGoogleToken(idToken)
+        const { user, accessToken, refreshToken } =
+            await loginWithGoogle(idToken)
 
-        if (!googleUser.isVerified) {
-            return res.status(401).json({
-                success: false,
-                message: "Google email is not verified"
-            })
-        }
-
-        const user = await User.findOne({ email: googleUser.email })
-
-        if (user && user.authProvider !== "google") {
-            return res.status(409).json({
-                success: false,
-                message: "This email is already registered. Please login using your email and password."
-            })
-        }
-
-        const googleAccount = user || await User.create({
-            name: googleUser.name,
-            email: googleUser.email,
-            authProvider: "google",
-            isVerified: true
-        })
-
-        const token = jwt.sign(
-            { id: googleAccount._id },
-            process.env.JWT_SECRET,
-            { expiresIn: "1d" }
-        )
-
-        res.cookie("token", token, {
+        res.cookie("accessToken", accessToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
-            maxAge: 24 * 60 * 60 * 1000
+            maxAge: 15 * 60 * 1000
+        })
+
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000
         })
 
         return res.status(200).json({
             success: true,
             message: "Google login successful",
             user: {
-                id: googleAccount._id,
-                name: googleAccount.name,
-                email: googleAccount.email,
-                role: googleAccount.role
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role
             }
         })
     } catch (error) {
+        if (
+            error.message === "This email is already registered. Please login using your email and password."
+        ) {
+            return res.status(409).json({
+                success: false,
+                message: error.message
+            })
+        }
+
+        if (
+            error.message === "Your account has been blocked. Please contact support."
+        ) {
+            return res.status(403).json({
+                success: false,
+                message: error.message
+            })
+        }
+
+        if (error.message === "Google email is not verified") {
+            return res.status(401).json({
+                success: false,
+                message: error.message
+            })
+        }
+
+        console.error("Google Login Error:", error)
+
         return res.status(401).json({
             success: false,
             message: "Google authentication failed"
         })
     }
 }
+
 
 
 //--------------------------------------------------------
@@ -534,5 +647,8 @@ module.exports = {
     forgotPassword,
     verifyPasswordReset,
     resetPasswordController,
-    refreshUserTokenController
+    refreshUserTokenController,
+    requestEmailChangeController,
+    verifyEmailChangeController,
+    changePasswordController
 };

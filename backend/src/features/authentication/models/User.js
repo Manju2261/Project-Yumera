@@ -62,6 +62,12 @@ const userSchema = new mongoose.Schema(
             select: false
         },
 
+        adminRefreshTokenHash: {
+            type: String,
+            default: null,
+            select: false
+        },
+
         profileImageKey: {
             type: String,
             default: null

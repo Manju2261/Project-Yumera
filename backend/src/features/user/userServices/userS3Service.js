@@ -12,6 +12,9 @@ const { getSignedUrl } = require("@aws-sdk/s3-request-presigner")
 //Upload Image - User Profile
 
 const uploadUserProfileImageService = async (file) => {
+    if (!file || !file.buffer || !file.originalname || !file.mimetype) {
+        throw new Error("Invalid image file")
+    }
     const fileExtension = file.originalname.split(".").pop()
     const key = `profile-images/${randomUUID()}.${fileExtension}`
 

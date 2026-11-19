@@ -7,10 +7,10 @@ const jwt = require("jsonwebtoken")
 const PasswordResetOTP =require("../models/PasswordResetOTP")
 const { OAuth2Client } = require("google-auth-library")
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
+const EmailChangeOTP = require("../models/EmailChangeOTP");
 
 //------------------------------------------------
 
-// Generates a secure random 6-digit OTP.
 //Generate OTP
 
 const generateOTP = () => {
@@ -49,14 +49,19 @@ const storeOTP = async (email, otp, registrationData) => {
 
 const sendOTPEmail = async (email, otp, subject = "YUMERA - Email Verification OTP") => {
     const isPasswordReset = subject.includes("Password Reset")
+    const isEmailChange = subject.includes("Email Change")
 
     const heading = isPasswordReset
         ? "Password Reset Request"
-        : "Welcome to YUMERA!"
+        : isEmailChange
+            ? "Email Change Verification"
+            : "Welcome to YUMERA!"
 
     const message = isPasswordReset
         ? "Use the OTP below to reset your YUMERA account password."
-        : "Use the OTP below to verify your email address."
+        : isEmailChange
+            ? "Use the OTP below to verify your new email address."
+            : "Use the OTP below to verify your email address."
 
     // Sends the OTP email and logs the SMTP delivery response.
     await emailTransporter.sendMail({
@@ -73,6 +78,98 @@ const sendOTPEmail = async (email, otp, subject = "YUMERA - Email Verification O
     })
 
 }
+
+
+//----------------------------------------------------------------
+//generate Email Change OTP
+
+const generateEmailChangeOTP = async (userId, newEmail) => {
+    newEmail = newEmail.trim().toLowerCase();
+
+    const user = await User.findById(userId);
+
+    if (!user) throw new Error("User not found");
+
+    if (user.authProvider === "google") {
+        throw new Error("Google accounts cannot change email");
+    }
+
+    const existingUser = await User.findOne({ email: newEmail });
+
+    if (existingUser) {
+        throw new Error("Email already in use");
+    }
+
+    const otp = generateOTP();
+    const otpHash = await hashOTP(otp);
+
+    await EmailChangeOTP.deleteMany({ userId });
+
+    await EmailChangeOTP.create({
+        userId,
+        email: newEmail,
+        otpHash,
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000)
+    });
+
+    try {
+        await sendOTPEmail(
+            newEmail,
+            otp,
+            "YUMERA - Email Change Verification"
+        );
+    } catch (error) {
+        await EmailChangeOTP.deleteOne({ userId });
+        throw error;
+    }
+};
+
+
+//--------------------------------------------------------------
+//Verify Email Change OTP
+
+const verifyEmailChangeOTP = async (userId, otp) => {
+    const otpData = await EmailChangeOTP.findOne({ userId });
+
+    if (!otpData) {
+        throw new Error("OTP not found. Please request a new OTP.");
+    }
+
+    if (otpData.expiresAt < new Date()) {
+        throw new Error("OTP has expired");
+    }
+
+    if (otpData.attempts >= MAX_OTP_ATTEMPTS) {
+        throw new Error("Maximum OTP attempts exceeded");
+    }
+
+    const isMatch = await bcrypt.compare(otp, otpData.otpHash);
+
+    if (!isMatch) {
+        otpData.attempts += 1;
+        await otpData.save();
+        throw new Error("Invalid OTP");
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) throw new Error("User not found");
+
+    const existingUser = await User.findOne({
+        email: otpData.email,
+        _id: { $ne: userId }
+    });
+
+    if (existingUser) throw new Error("Email already in use");
+
+    user.email = otpData.email;
+    await user.save();
+
+    await EmailChangeOTP.deleteOne({ userId });
+
+    return user;
+};
+
 
 //--------------------------------------------------------
 // Generates and Send OTP
@@ -298,6 +395,7 @@ const resetPassword = async (email, newPassword) => {
 
     const passwordHash = await bcrypt.hash(newPassword, 12)
     user.password = passwordHash
+    user.refreshTokenHash = null
     await user.save()
 
     await PasswordResetOTP.deleteOne({ email: normalizedEmail })
@@ -404,6 +502,54 @@ const verifyGoogleToken = async (idToken) => {
 
  
 // -------------------------------------------------
+//Login with Google
+
+const loginWithGoogle = async (idToken) => {
+    const googleUser = await verifyGoogleToken(idToken)
+
+    if (!googleUser.isVerified) {
+        throw new Error("Google email is not verified")
+    }
+
+    const normalizedEmail = googleUser.email.trim().toLowerCase()
+    let user = await User.findOne({ email: normalizedEmail })
+
+    if (user && user.authProvider !== "google") {
+        throw new Error(
+            "This email is already registered. Please login using your email and password."
+        )
+    }
+
+    if (user && user.isBlocked) {
+        throw new Error(
+            "Your account has been blocked. Please contact support."
+        )
+    }
+
+    if (!user) {
+        user = await User.create({
+            name: googleUser.name,
+            email: normalizedEmail,
+            authProvider: "google",
+            isVerified: true
+        })
+    }
+
+    const accessToken = generateAccessToken(user._id)
+    const refreshToken = generateRefreshToken(user._id)
+
+    user.refreshTokenHash = hashRefreshToken(refreshToken)
+    await user.save()
+
+    return {
+        user,
+        accessToken,
+        refreshToken
+    }
+}
+
+
+// -------------------------------------------------
 // Generates an Access Token.
 
 const generateAccessToken = (userId) => {
@@ -502,6 +648,33 @@ const logoutUser = async (refreshToken) => {
 }
 
 
+//-----------------------------------------------------------
+//Change Password
+
+const changePasswordService = async (userId, currentPassword, newPassword) => {
+    const user = await User.findById(userId).select("+password")
+
+    if (!user) throw new Error("User not found")
+
+    if (user.authProvider === "google") {
+        throw new Error("Google accounts cannot change password")
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password)
+
+    if (!isMatch) {
+        throw new Error("Current password is incorrect")
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10)
+    user.refreshTokenHash = null
+
+    await user.save()
+
+    return user
+}
+
+
 // -------------------------------------------------
 //Login User.
 
@@ -515,6 +688,13 @@ const loginUser = async (email, password) => {
     if (!user) 
     {
         throw new Error("Invalid email or password")
+    }
+
+    if (user.authProvider === "google") 
+    {
+        throw new Error(
+            "This account was created using Google. Please login using Google."
+        )
     }
 
     if (user.isBlocked) 
@@ -545,16 +725,20 @@ const loginUser = async (email, password) => {
 
 //--------------------------------------------------
 
-module.exports = { 
+module.exports = {
     registerUser,
-    generateAndSendOTP, 
+    generateEmailChangeOTP,
+    verifyEmailChangeOTP,
+    generateAndSendOTP,
     verifyOTP,
     resendOTP,
+    changePasswordService,
     loginUser,
     generatePasswordResetOTP,
     verifyPasswordResetOTP,
     resetPassword,
     verifyGoogleToken,
+    loginWithGoogle,
     refreshUserAccessToken,
     logoutUser
- };
+};

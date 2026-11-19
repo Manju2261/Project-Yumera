@@ -1,30 +1,42 @@
 
-const { adminLoginService } = require("../adminServices/adminUserService")
+const { 
+    adminLoginService,
+    refreshAdminAccessToken,
+    adminLogoutService
+} = require("../adminServices/adminUserService")
+
 const adminLoginValidator = require("../adminValidators/adminLoginValidator")
 
 //---------------------------------------------------------------------------------
-// Admin login 
+// Admin login
 const adminLoginController = async (req, res) => {
-    try 
-    {
+    try {
         const { email, password } = req.body
+
         const { errors, isValid } = adminLoginValidator(email, password)
 
-        if (!isValid) 
-        {
+        if (!isValid) {
             return res.status(400).json({
                 success: false,
                 errors
             })
         }
 
-        const { admin, token } = await adminLoginService(email, password)
+        const { admin, accessToken, refreshToken } =
+            await adminLoginService(email, password)
 
-        res.cookie("adminToken", token, {
+        res.cookie("adminAccessToken", accessToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
-            maxAge: 24 * 60 * 60 * 1000
+            maxAge: 15 * 60 * 1000
+        })
+
+        res.cookie("adminRefreshToken", refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000
         })
 
         return res.status(200).json({
@@ -32,6 +44,7 @@ const adminLoginController = async (req, res) => {
             message: "Admin login successful",
             admin
         })
+
     } catch (error) {
         return res.status(401).json({
             success: false,
@@ -57,9 +70,97 @@ const adminGetProfileController = (req, res) => {
 }
 
 
+//-----------------------------------------------------------
+// Refresh Admin Access Token
+
+const adminRefreshTokenController = async (req, res) => {
+    try {
+        const refreshToken = req.cookies?.adminRefreshToken
+
+        const { accessToken, refreshToken: newRefreshToken } =
+            await refreshAdminAccessToken(refreshToken)
+
+        res.cookie("adminAccessToken", accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 15 * 60 * 1000
+        })
+
+        res.cookie("adminRefreshToken", newRefreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Admin token refreshed successfully"
+        })
+
+    } catch (error) 
+    {
+        res.clearCookie("adminAccessToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax"
+        })
+
+        res.clearCookie("adminRefreshToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax"
+        })
+
+        return res.status(401).json({
+            success: false,
+            message: error.message
+        })
+    }
+}
+
+
+//-----------------------------------------------------------
+// Admin Logout
+
+const adminLogoutController = async (req, res) => {
+    try {
+        const refreshToken = req.cookies?.adminRefreshToken
+
+        await adminLogoutService(refreshToken)
+
+        res.clearCookie("adminAccessToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax"
+        })
+
+        res.clearCookie("adminRefreshToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax"
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Admin logout successful"
+        })
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Admin logout failed"
+        })
+    }
+}
+
+
 //---------------------------------------------------------------------------------
 
 module.exports = { 
     adminLoginController,
-    adminGetProfileController
+    adminGetProfileController,
+    adminRefreshTokenController,
+    adminLogoutController
 }

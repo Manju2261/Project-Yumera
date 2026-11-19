@@ -28,6 +28,14 @@ const authMiddleware = async (req, res, next) => {
         })
     }
 
+    if (!decoded.id) 
+    {
+        return res.status(401).json({
+            success: false,
+            message: "Invalid authentication token."
+        })
+    }
+
     try 
     {
         const user = await User.findById(decoded.id).select("-password")

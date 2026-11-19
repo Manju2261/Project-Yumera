@@ -17,9 +17,5 @@ const adminLoginValidator = (email, password) => {
 }
 
 
-//----------------------------------------------------------
-
-
-
 //-----------------------------------------------------------
 module.exports = adminLoginValidator

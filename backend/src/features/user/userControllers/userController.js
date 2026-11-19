@@ -234,8 +234,10 @@ const setDefaultUserAddressController = async (req, res) => {
 
 const updateUserProfileImageController = async (req, res) => {
     try {
-        if (!req.file) {
+        if (!req.file) 
+        {
             return res.status(400).json({
+                success: false,
                 message: "Please select a profile image"
             })
         }

@@ -9,7 +9,10 @@ const {
     forgotPassword,
     verifyPasswordReset,
     resetPasswordController,
-    refreshUserTokenController
+    refreshUserTokenController,
+    requestEmailChangeController,
+    verifyEmailChangeController,
+    changePasswordController
 } = require("../controllers/authController");
 const authMiddleware = require("../middleware/authMiddleware")
 
@@ -26,6 +29,14 @@ router
     .post("/forgot-password", forgotPassword)
     .post("/verify-reset-otp", verifyPasswordReset)
     .post("/reset-password", resetPasswordController)
+    .post("/change-email/request", authMiddleware, requestEmailChangeController)
+    .post("/change-email/verify", authMiddleware, verifyEmailChangeController)
+
+router.patch(
+    "/change-password",
+    authMiddleware,
+    changePasswordController
+);
 
 router.get("/profile", authMiddleware, (req, res) => {
     return res.status(200).json({

@@ -91,12 +91,15 @@ const updateUserAddressService = async (userId, addressId, addressData) => {
         "addressLine",
         "city",
         "state",
-        "pincode"
+        "pincode",
+        "isDefault"
     ]
 
     allowedFields.forEach((field) => {
         if (addressData[field] !== undefined) {
-            address[field] = addressData[field].trim()
+            address[field] = field === "isDefault"
+                ? addressData[field]
+                : addressData[field].trim()
         }
     })
 
