@@ -8,6 +8,7 @@ const connectDB = require("./config/db");
 const authRoutes = require("./features/authentication/routes/authRoutes");
 const adminAuthRoutes = require("./features/admin/adminRoutes/adminAuthRoutes")
 const adminUserRoutes = require("./features/admin/adminRoutes/adminUserRoutes")
+const userRoutes = require("./features/user/userRoutes/userRoutes");
 
 const app = express();
 
@@ -20,6 +21,8 @@ app.use(cookieParser())
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminAuthRoutes)
 app.use("/api/admin/users", adminUserRoutes)
+
+app.use("/api/user", userRoutes);
 
 app.get("/", (req, res) => {
     res.status(200).json({

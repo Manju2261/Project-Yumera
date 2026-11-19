@@ -61,6 +61,44 @@ const userSchema = new mongoose.Schema(
             default: null,
             select: false
         },
+
+        profileImageKey: {
+            type: String,
+            default: null
+        },
+
+        addresses: [
+            {
+                fullName: {
+                    type: String,
+                    trim: true,
+                },
+                phone: {
+                    type: String,
+                    trim: true,
+                },
+                addressLine: {
+                    type: String,
+                    trim: true,
+                },
+                city: {
+                    type: String,
+                    trim: true,
+                },
+                state: {
+                    type: String,
+                    trim: true,
+                },
+                pincode: {
+                    type: String,
+                    trim: true,
+                },
+                isDefault: {
+                    type: Boolean,
+                    default: false,
+                },
+            },
+        ],
     },
     { timestamps: true }
 );
