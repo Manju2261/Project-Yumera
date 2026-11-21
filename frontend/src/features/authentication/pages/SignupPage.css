@@ -1,0 +1,120 @@
+/* Signup form styling */
+.signup-form {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.signup-form h1 {
+  margin: 0;
+  color: #102a43;
+  letter-spacing: 5px;
+  font-family: Georgia, serif;
+  font-size: 28px;
+}
+
+.signup-form h2 {
+  margin: 8px 0 4px;
+  color: #102a43;
+  font-family: Georgia, serif;
+  font-size: 24px;
+  font-weight: 400;
+}
+
+.signup-form p {
+  margin: 3px 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.signup-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.signup-form form > label {
+  margin-top: 8px;
+  margin-bottom: 4px;
+  color: #102a43;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.signup-form input:not([type="checkbox"]) {
+  width: 100%;
+  height: 34px;
+  padding: 7px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  font-size: 13px;
+}
+
+.signup-form button {
+  margin-top: 5px;
+  padding: 9px;
+  border: none;
+  border-radius: 8px;
+  background: #102a43;
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+}
+
+.signup-form button:hover {
+  background: #1f4e79;
+}
+/* Center the headings and descriptions */
+.signup-form > h1,
+.signup-form > h2,
+.signup-form > p {
+  text-align: center;
+}
+
+/* Center Google Sign-In section */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 12px 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.google-button {
+  width: 100%;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  color: #102a43;
+  cursor: pointer;
+}
+
+/* OTP input boxes */
+.otp-inputs {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.otp-inputs input {
+  width: 42px !important;
+  height: 45px !important;
+  text-align: center;
+  font-size: 18px !important;
+}
+
+/* Disabled state for Resend OTP button */
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

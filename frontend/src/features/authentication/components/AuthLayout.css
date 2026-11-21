@@ -1,0 +1,78 @@
+
+/* Common authentication layout */
+.auth-container {
+  width: calc(100% - 60px);
+  max-width: 1100px;
+  height: calc(100vh - 40px);
+  margin: 20px auto;
+  display: flex;
+  background: #faf8f4;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.auth-container * {
+  box-sizing: border-box;
+}
+
+.auth-image {
+  width: 45%;
+  height: 100%;
+  padding: 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 20px;
+  background: #175672;
+  color: #faf8f4;
+}
+
+.auth-image p {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 3px;
+  line-height: 1.5;
+}
+
+.auth-image h1 {
+  max-width: 450px;
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: 38px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.auth-content {
+  width: 55%;
+  height: 100%;
+  padding: 25px 45px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background: #d2cdb2;
+  overflow-y: auto;
+}
+
+/* Responsive layout */
+@media (max-width: 768px) {
+  .auth-container {
+    width: 100%;
+    height: auto;
+    min-height: 100vh;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .auth-image {
+    display: none;
+  }
+
+  .auth-content {
+    width: 100%;
+    min-height: 100vh;
+    height: auto;
+    padding: 30px 20px;
+  }
+}

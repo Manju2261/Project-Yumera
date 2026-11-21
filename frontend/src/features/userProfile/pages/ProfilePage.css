@@ -1,0 +1,222 @@
+
+/* Profile page */
+.profile-page {
+  max-width: 700px;
+  margin: 50px auto;
+  padding: 30px;
+  color: #102a43;
+}
+
+.profile-page h1 {
+  text-align: center;
+  font-family: Georgia, serif;
+}
+
+/* Profile details */
+.profile-details {
+  margin-top: 30px;
+  padding: 30px;
+  text-align: center;
+  background: #eaf2f8;
+  border-radius: 12px;
+}
+
+.profile-details h2 {
+  font-family: Georgia, serif;
+}
+
+.profile-details p {
+  margin: 15px 0;
+}
+
+/* Profile image */
+.profile-image {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #102a43;
+  color: white;
+  font-size: 40px;
+}
+
+/* Profile links */
+.profile-details a {
+  display: inline-block;
+  margin-top: 15px;
+  padding: 10px 25px;
+  border-radius: 6px;
+  background: #102a43;
+  color: white;
+  text-decoration: none;
+}
+
+.profile-details a:hover {
+  background: #1f4e79;
+}
+
+/* Common form styles */
+.profile-details form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+
+.profile-details form label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.profile-details form input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.profile-details form button {
+  margin-top: 10px;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  background: #102a43;
+  color: white;
+  cursor: pointer;
+}
+
+.profile-details form button:hover {
+  background: #1f4e79;
+}
+
+/* Change Password page only */
+.change-password-form form {
+  gap: 5px;
+}
+
+.change-password-form form input {
+  padding: 7px 10px;
+}
+
+.change-password-form form button {
+  margin-top: 5px;
+}
+
+/* Address page buttons */
+.address-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.address-actions a,
+.address-actions button {
+  width: 90px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 6px;
+  background: #102a43;
+  color: white;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.address-actions a:hover,
+.address-actions button:hover {
+  background: #1f4e79;
+}
+
+/* Add Address page only */
+.add-address-form {
+  padding: 25px 30px;
+}
+
+.add-address-form form {
+  gap: 8px;
+}
+
+.add-address-form form label {
+  margin-top: 4px;
+}
+
+.add-address-form form input {
+  height: 36px;
+  padding: 7px 10px;
+}
+
+.add-address-form form p {
+  margin: 0;
+  font-size: 12px;
+}
+
+.add-address-form form button {
+  margin-top: 8px;
+}
+
+/* Add Address page layout */
+.add-address-page {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.add-address-page .add-address-form {
+  margin-top: 15px;
+  padding: 20px 30px;
+}
+
+/* Save and Cancel buttons */
+.address-form-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.address-form-actions button,
+.address-form-actions a {
+  width: 150px;
+  height: 40px;
+  flex: 0 0 150px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: #102a43;
+  color: white;
+  font-family: inherit;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Align Save and Cancel buttons */
+.profile-details form .address-form-actions button,
+.profile-details form .address-form-actions a {
+  width: 150px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.address-form-actions button:hover,
+.address-form-actions a:hover {
+  background: #1f4e79;
+}
