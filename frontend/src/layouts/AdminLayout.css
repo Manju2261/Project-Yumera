@@ -1,0 +1,114 @@
+/* Admin Master Layout */
+.admin-layout {
+    display: flex;
+    min-height: 100vh;
+    background: #f8fafc;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Sidebar Container */
+.admin-sidebar {
+    width: 256px;
+    background: #102a43;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    min-height: 100vh;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Brand Header */
+.admin-sidebar-brand {
+    padding: 24px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-sidebar-brand h2 {
+    font-family: Georgia, serif;
+    font-size: 20px;
+    letter-spacing: 2px;
+    color: #ffffff;
+    margin: 0;
+}
+
+.admin-sidebar-brand span {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: #94a3b8;
+    margin-top: 4px;
+    font-weight: 600;
+}
+
+/* Navigation List */
+.admin-sidebar-nav {
+    flex: 1;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+}
+
+.admin-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.admin-nav-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #ffffff;
+}
+
+.admin-nav-item.active {
+    background: #175672;
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(23, 86, 114, 0.35);
+}
+
+.admin-nav-item .nav-icon {
+    font-size: 16px;
+}
+
+/* Bottom Footer & Logout */
+.admin-sidebar-footer {
+    padding: 16px 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-logout-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.admin-logout-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+/* Main Content Area */
+.admin-main {
+    flex: 1;
+    padding: 32px 40px;
+    overflow-y: auto;
+}

@@ -1,26 +1,53 @@
-
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Link, useNavigate} from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import AuthLayout from '../components/AuthLayout'
+import api from '../../../services/api'
+import './SignupPage.css'
 
 //--------------------------------------------------------
 // Forgot password page
 
-function ForgotPasswordPage() 
-{
+function ForgotPasswordPage() {
     const navigate = useNavigate()
+    const location = useLocation()
+    const email = location.state?.email
     const {
         register,
         handleSubmit,
         formState: { errors }
     } = useForm()
 
-    // Navigate to OTP verification after email validation
-    const onSubmit = () => {
-        navigate('/verify-otp', {
-            state: { from: 'forgot-password' },
-            replace: true
-        })
+    const [serverError, setServerError] = useState("")
+    const [isloading, setIsLoading] = useState(false)
+
+    // Sends the password reset OTP to the email address.
+    const onSubmit = async (data) => {
+        try {
+            setServerError('')
+            setIsLoading(true)
+
+            const response = await api.post('/auth/forgot-password', {
+                email: data.email
+            })
+
+            if (response.data.success) {
+                navigate('/verify-otp', {
+                    replace: true,
+                    state: {
+                        from: 'forgot-password',
+                        email: data.email
+                    }
+                })
+            }
+        } catch (error) {
+            setServerError(
+                error.response?.data?.message ||
+                'Unable to process your request. Please try again.'
+            )
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     return (
@@ -30,14 +57,14 @@ function ForgotPasswordPage()
                 <p>The Essence of You.</p>
 
                 <h2>Forgot Password?</h2>
-                <p>Enter your registered email address to reset your password.</p>
+                <p>We will send a password reset OTP to your registered email address.</p>
 
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    <label>Email Address</label>
-
+                    <label>Registered Email Address</label>
                     <input
                         type="email"
-                        placeholder="Enter your email address"
+                        placeholder="Enter your registered email"
+                        defaultValue={email || ''}
                         {...register('email', {
                             required: 'Email is required',
                             pattern: {
@@ -46,14 +73,19 @@ function ForgotPasswordPage()
                             }
                         })}
                     />
-
                     <p className="error-message">{errors.email?.message}</p>
 
-                    <button type="submit">SEND OTP</button>
+                    {serverError && (
+                        <p className="error-message">{serverError}</p>
+                    )}
+
+                    <button type="submit" disabled={isloading}>
+                        {isloading ? 'SENDING...' : 'SEND OTP →'}
+                    </button>
                 </form>
 
-                <p>
-                    <Link to="/login">Back to Login</Link>
+                <p className="auth-signin">
+                    <Link to="/login">← Back to Login</Link>
                 </p>
             </div>
         </AuthLayout>

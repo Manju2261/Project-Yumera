@@ -1,200 +1,248 @@
-import { useState } from 'react'
-import '../../userProfile/pages/ProfilePage.css'
+import { useState, useEffect } from 'react'
+import api from '../../../services/api'
+import AdminLayout from '../../../layouts/AdminLayout'
 import ConfirmationModal from '../../../components/common/ConfirmationModal'
+import './AdminUsersPage.css'
 
 // Admin user management page
 function AdminUsersPage() {
-    const [users, setUsers] = useState([
-        {
-            id: 1,
-            name: 'Manju K M',
-            email: 'manju@example.com',
-            status: 'Active',
-            createdAt: '2026-11-20T10:10:00'
-        },
-        {
-            id: 2,
-            name: 'Test User',
-            email: 'test@example.com',
-            status: 'Blocked',
-            createdAt: '2026-10-20T10:00:20'
-        },
-        {
-            id: 3,
-            name: 'Arun Kumar',
-            email: 'arun@example.com',
-            status: 'Active',
-            createdAt: '2026-11-18T10:00:00'
-        },
-        {
-            id: 4,
-            name: 'Brun Kumar',
-            email: 'brun@example.com',
-            status: 'Active',
-            createdAt: '2026-11-10T10:00:01'
-        },
-        {
-            id: 5,
-            name: 'Crun Kumar',
-            email: 'crun@example.com',
-            status: 'Active',
-            createdAt: '2026-11-15T10:00:00'
-        },
-        {
-            id: 6,
-            name: 'Drun Kumar',
-            email: 'drun@example.com',
-            status: 'Active',
-            createdAt: '2026-10-20T10:00:00'
-        },
-        {
-            id: 7,
-            name: 'Erun Kumar',
-            email: 'erun@example.com',
-            status: 'Active',
-            createdAt: '2026-11-12T10:00:00'
-        }
-    ])
+    const [users, setUsers] = useState([])
+    const [pagination, setPagination] = useState({
+        currentPage: 1,
+        totalPages: 0,
+        totalUsers: 0,
+        limit: 5
+    })
+    const [isLoading, setIsLoading] = useState(true)
+    const [serverError, setServerError] = useState('')
 
     const [searchTerm, setSearchTerm] = useState('')
     const [currentPage, setCurrentPage] = useState(1)
     const [selectedUserId, setSelectedUserId] = useState(null)
 
-    const usersPerPage = 5
+    // Fetches users whenever pagination or search changes
+    useEffect(() => {
+        let isMounted = true
 
-    // Filter users based on search term
-    const filteredUsers = users.filter(user =>
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+        const loadUsers = async () => {
+            try {
+                setIsLoading(true)
 
-    // Sort users by latest registration date
-    const sortedUsers = [...filteredUsers].sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-    )
+                const response = await api.get('/admin/users', {
+                    params: {
+                        page: currentPage,
+                        limit: pagination.limit,
+                        search: searchTerm
+                    }
+                })
 
-    // Calculate pagination
-    const totalPages = Math.ceil(sortedUsers.length / usersPerPage)
-    const indexOfLastUser = currentPage * usersPerPage
-    const indexOfFirstUser = indexOfLastUser - usersPerPage
+                if (isMounted) {
+                    setUsers(response.data.users)
+                    setPagination(response.data.pagination)
+                    setServerError('')
+                }
+            } catch (error) {
+                if (isMounted) {
+                    setServerError(
+                        error.response?.data?.message ||
+                        'Failed to fetch users. Please try again.'
+                    )
+                }
+            } finally {
+                if (isMounted) {
+                    setIsLoading(false)
+                }
+            }
+        }
 
-    const currentUsers = sortedUsers.slice(
-        indexOfFirstUser,
-        indexOfLastUser
-    )
+        loadUsers()
 
-    // Find the user selected for block or unblock
-    const selectedUser = users.find(user => user.id === selectedUserId)
+        return () => {
+            isMounted = false
+        }
+    }, [currentPage, pagination.limit, searchTerm])
 
-    // Open confirmation modal
+    // Finds the selected user for block/unblock modal
+    const selectedUser = users.find(user => user._id === selectedUserId)
+
     const toggleUserStatus = (id) => {
         setSelectedUserId(id)
     }
 
-    // Update user status after confirmation
-    const confirmStatusChange = () => {
-        setUsers(prevUsers =>
-            prevUsers.map(user =>
-                user.id === selectedUserId
-                    ? {
-                        ...user,
-                        status: user.status === 'Active' ? 'Blocked' : 'Active'
-                    }
-                    : user
-            )
-        )
+    // Updates user block status
+    const confirmStatusChange = async () => {
+        try {
+            setServerError('')
 
-        setSelectedUserId(null)
+            const endpoint = selectedUser.isBlocked
+                ? `/admin/users/${selectedUserId}/unblock`
+                : `/admin/users/${selectedUserId}/block`
+
+            await api.patch(endpoint)
+
+            setUsers(prevUsers =>
+                prevUsers.map(user =>
+                    user._id === selectedUserId
+                        ? { ...user, isBlocked: !selectedUser.isBlocked }
+                        : user
+                )
+            )
+            setSelectedUserId(null)
+        } catch (error) {
+            setServerError(
+                error.response?.data?.message ||
+                'Failed to update user status. Please try again.'
+            )
+        }
     }
 
-    // Close confirmation modal without changing status
     const cancelStatusChange = () => {
         setSelectedUserId(null)
     }
 
     return (
-        <div className="profile-page">
-            <h1>User Management</h1>
+        <AdminLayout>
+            <div className="admin-users-page">
+                {/* Page Header */}
+                <div className="admin-page-header">
+                    <div className="admin-page-title">
+                        <h1>Customer Management</h1>
+                    </div>
 
-            {/* Search users and reset pagination */}
-            <input
-                type="text"
-                placeholder="Search users by name or email"
-                value={searchTerm}
-                onChange={(event) => {
-                    setSearchTerm(event.target.value)
-                    setCurrentPage(1)
-                }}
-            />
-
-            {/* Clear search */}
-            <button
-                type="button"
-                onClick={() => {
-                    setSearchTerm('')
-                    setCurrentPage(1)
-                }}
-            >
-                Clear
-            </button>
-
-            {/* Display filtered users */}
-            {currentUsers.map(user => (
-                <div className="profile-details" key={user.id}>
-                    <h2>{user.name}</h2>
-                    <p>Email: {user.email}</p>
-                    <p>Status: {user.status}</p>
-
-                    <button
-                        type="button"
-                        onClick={() => toggleUserStatus(user.id)}
-                    >
-                        {user.status === 'Active' ? 'Block User' : 'Unblock User'}
-                    </button>
+                    {pagination.totalUsers > 0 && (
+                        <div className="admin-stats-badge">
+                            Total Users: {pagination.totalUsers}
+                        </div>
+                    )}
                 </div>
-            ))}
 
-            {/* Display message when no users are found */}
-            {currentUsers.length === 0 && (
-                <p>No users found.</p>
-            )}
+                {/* Search & Actions Bar */}
+                <div className="admin-actions-bar">
+                    <div className="admin-search-box">
+                        <input
+                            type="text"
+                            placeholder="Search users by name or email..."
+                            value={searchTerm}
+                            onChange={(event) => {
+                                setSearchTerm(event.target.value)
+                                setCurrentPage(1)
+                            }}
+                        />
+                    </div>
 
-            {/* Pagination controls */}
-            {totalPages > 0 && (
-                <div className="pagination">
-                    <button
-                        type="button"
-                        disabled={currentPage === 1}
-                        onClick={() => setCurrentPage(currentPage - 1)}
-                    >
-                        Previous
-                    </button>
-
-                    <span>
-                        Page {currentPage} of {totalPages}
-                    </span>
-
-                    <button
-                        type="button"
-                        disabled={currentPage === totalPages}
-                        onClick={() => setCurrentPage(currentPage + 1)}
-                    >
-                        Next
-                    </button>
+                    {searchTerm && (
+                        <button
+                            type="button"
+                            className="admin-clear-btn"
+                            onClick={() => {
+                                setSearchTerm('')
+                                setCurrentPage(1)
+                            }}
+                        >
+                            Clear
+                        </button>
+                    )}
                 </div>
-            )}
 
-            {/* Block or unblock confirmation modal */}
-            {selectedUser && (
-                <ConfirmationModal
-                    message={`Are you sure you want to ${
-                        selectedUser.status === 'Active' ? 'block' : 'unblock'
-                    } this user?`}
-                    onConfirm={confirmStatusChange}
-                    onCancel={cancelStatusChange}
-                />
-            )}
-        </div>
+                {/* Error Banner */}
+                {serverError && (
+                    <p className="error-message">{serverError}</p>
+                )}
+
+                {/* Table Card */}
+                <div className="admin-table-card">
+                    {isLoading ? (
+                        <div className="admin-empty-state">Loading users...</div>
+                    ) : users.length === 0 ? (
+                        <div className="admin-empty-state">No users found.</div>
+                    ) : (
+                        <table className="admin-table">
+                            <thead>
+                                <tr>
+                                    <th className="col-idx">Sl.No</th>
+                                    <th className="col-user">Customer</th>
+                                    <th className="col-email">Email</th>
+                                    <th className="col-phone">Phone</th>
+                                    <th className="col-status">Status</th>
+                                    <th className="col-action">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {users.map((user, index) => (
+                                    <tr key={user._id}>
+                                        <td className="col-idx">
+                                            {(pagination.currentPage - 1) * pagination.limit + index + 1}
+                                        </td>
+                                        <td className="col-user">
+                                            <div className="user-cell">
+                                                <div className="user-avatar">
+                                                    {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                                                </div>
+                                                <span className="user-name">{user.name}</span>
+                                            </div>
+                                        </td>
+                                        <td className="col-email">{user.email}</td>
+                                        <td className="col-phone">{user.phone || '—'}</td>
+                                        <td className="col-status">
+                                            <span className={`status-badge ${user.isBlocked ? 'blocked' : 'active'}`}>
+                                                <span className="status-dot"></span>
+                                                {user.isBlocked ? 'Blocked' : 'Active'}
+                                            </span>
+                                        </td>
+                                        <td className="col-action">
+                                            <button
+                                                type="button"
+                                                className={`user-action-btn ${user.isBlocked ? 'unblock' : 'block'}`}
+                                                onClick={() => toggleUserStatus(user._id)}
+                                            >
+                                                {user.isBlocked ? 'Unblock' : 'Block'}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+
+                    {/* Pagination */}
+                    {pagination.totalPages > 0 && (
+                        <div className="admin-pagination-bar">
+                            <span className="pagination-info">
+                                Page {pagination.currentPage} of {pagination.totalPages}
+                            </span>
+
+                            <div className="pagination-controls">
+                                <button
+                                    type="button"
+                                    className="pagination-btn"
+                                    disabled={pagination.currentPage === 1 || isLoading}
+                                    onClick={() => setCurrentPage(currentPage - 1)}
+                                >
+                                    Previous
+                                </button>
+                                <button
+                                    type="button"
+                                    className="pagination-btn"
+                                    disabled={pagination.currentPage === pagination.totalPages || isLoading}
+                                    onClick={() => setCurrentPage(currentPage + 1)}
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Confirmation Modal */}
+                {selectedUser && (
+                    <ConfirmationModal
+                        message={`Are you sure you want to ${selectedUser.isBlocked ? 'unblock' : 'block'} ${selectedUser.name}?`}
+                        onConfirm={confirmStatusChange}
+                        onCancel={cancelStatusChange}
+                    />
+                )}
+            </div>
+        </AdminLayout>
     )
 }
 

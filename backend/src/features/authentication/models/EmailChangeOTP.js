@@ -25,6 +25,11 @@ const emailChangeOTPSchema = new mongoose.Schema({
     attempts: {
         type: Number,
         default: 0
+    },
+    stage: {
+        type: String,
+        enum: ["CURRENT_EMAIL", "NEW_EMAIL"],
+        default: "CURRENT_EMAIL"
     }
 });
 

@@ -4,6 +4,9 @@ require("dotenv").config();
 const cookieParser = require("cookie-parser")
 const cors = require("cors")
 
+const { GetObjectCommand } = require("@aws-sdk/client-s3");
+const s3 = require("./config/s3");
+
 const connectDB = require("./config/db");
 const authRoutes = require("./features/authentication/routes/authRoutes");
 const adminAuthRoutes = require("./features/admin/adminRoutes/adminAuthRoutes")
@@ -11,7 +14,6 @@ const adminUserRoutes = require("./features/admin/adminRoutes/adminUserRoutes")
 const userRoutes = require("./features/user/userRoutes/userRoutes");
 
 const app = express();
-
 app.use(cors({
     origin: "http://localhost:5173",
     credentials: true

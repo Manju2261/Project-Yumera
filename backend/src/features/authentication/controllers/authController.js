@@ -1,18 +1,20 @@
 const validateRegistration = require("../validators/registerValidator");
-const { registerUser, 
-        generateEmailChangeOTP,
-        generateAndSendOTP,
-        verifyEmailChangeOTP,
-        verifyOTP,
-        resendOTP,
-        loginUser,
-        generatePasswordResetOTP,
-        verifyPasswordResetOTP,
-        resetPassword,
-        loginWithGoogle,
-        refreshUserAccessToken,
-        logoutUser,
-        changePasswordService
+const { registerUser,
+    generateCurrentEmailOTP,
+    verifyCurrentEmailOTP,
+    generateNewEmailOTP,
+    verifyNewEmailOTP,
+    generateAndSendOTP,
+    verifyOTP,
+    resendOTP,
+    loginUser,
+    generatePasswordResetOTP,
+    verifyPasswordResetOTP,
+    resetPassword,
+    loginWithGoogle,
+    refreshUserAccessToken,
+    logoutUser,
+    changePasswordService
 } = require("../services/authService");
 
 const validateLogin = require("../validators/loginValidator")
@@ -22,12 +24,10 @@ const validateLogin = require("../validators/loginValidator")
 //Register Control
 
 const register = async (req, res) => {
-    try
-    {
+    try {
         const validationError = validateRegistration(req.body || {});
 
-        if (validationError) 
-        {
+        if (validationError) {
             return res.status(400).json({
                 success: false,
                 message: validationError,
@@ -43,8 +43,8 @@ const register = async (req, res) => {
         });
     } catch (error) {
         const statusCode =
-        error.code === 11000 ? 409 :
-        error.message === "Email already registered" ? 409 : 500;
+            error.code === 11000 ? 409 :
+                error.message === "Email already registered" ? 409 : 500;
 
         return res.status(statusCode).json({
             success: false,
@@ -59,9 +59,8 @@ const register = async (req, res) => {
 // Verify Email OTP 
 
 const verifyEmailOTP = async (req, res) => {
-    try 
-    {
-        const {email, otp} = req.body
+    try {
+        const { email, otp } = req.body
 
         // Checks whether email and OTP are provided in the request.
         if (!email || !otp) {
@@ -78,9 +77,9 @@ const verifyEmailOTP = async (req, res) => {
                 message: "OTP must contain exactly 6 digits"
             })
         }
-        
+
         // Verifies OTP and creates the user only after successful email verification.
-        
+
         const registrationData = await verifyOTP(email, otp)
 
         const user = await registerUser({
@@ -99,15 +98,14 @@ const verifyEmailOTP = async (req, res) => {
                 role: user.role
             }
         })
-    }catch (error)
-    {
+    } catch (error) {
         // Handles MongoDB duplicate key error (11000) duplicate email(409), client-side and unexpected server errors.
-        const statusCode = 
+        const statusCode =
             error.code === 11000 ? 409 :
-            error.message === "OTP not found or expired" ||
-            error.message === "OTP has expired. Please request a new OTP."||
-            error.message === "Invalid OTP" ||
-            error.message === "Maximum OTP attempts exceeded. Please request a new OTP." ? 400 : 500
+                error.message === "OTP not found or expired" ||
+                    error.message === "OTP has expired. Please request a new OTP." ||
+                    error.message === "Invalid OTP" ||
+                    error.message === "Maximum OTP attempts exceeded. Please request a new OTP." ? 400 : 500
 
         return res.status(statusCode).json({
             success: false,
@@ -120,21 +118,19 @@ const verifyEmailOTP = async (req, res) => {
 //--------------------------------------------------------------
 // Resend Email OTP.
 
-const resendEmailOTP = async(req, res) => {
-    try{
-        const {email} = req.body
-        if(!email)
-        {
+const resendEmailOTP = async (req, res) => {
+    try {
+        const { email } = req.body
+        if (!email) {
             return res.status(400).json({
-                success : false,
-                message : "Email is required"
+                success: false,
+                message: "Email is required"
             })
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-        if (!emailRegex.test(email.trim())) 
-        {
+        if (!emailRegex.test(email.trim())) {
             return res.status(400).json({
                 success: false,
                 message: "Please provide a valid email address"
@@ -143,13 +139,11 @@ const resendEmailOTP = async(req, res) => {
 
         await resendOTP(email)
         return res.status(200).json({
-            success : true,
-            message : "A new OTP has been sent to your email"
+            success: true,
+            message: "A new OTP has been sent to your email"
         })
-    } catch (error) 
-    {
-        if (error.message === "Registration session not found or expired. Please register again.") 
-        {
+    } catch (error) {
+        if (error.message === "Registration session not found or expired. Please register again.") {
             return res.status(404).json({
                 success: false,
                 message: error.message
@@ -167,22 +161,14 @@ const resendEmailOTP = async(req, res) => {
 //------------------------------------------------------------------
 // Send Email Change OTP
 
-const requestEmailChangeController = async (req, res) => {
+// Step 1: Send OTP to Current Email
+const requestCurrentEmailChangeOTPController = async (req, res) => {
     try {
-        const { newEmail } = req.body;
-
-        if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail.trim())) {
-            return res.status(400).json({
-                success: false,
-                message: "Please enter a valid email"
-            });
-        }
-
-        await generateEmailChangeOTP(req.user._id, newEmail);
+        await generateCurrentEmailOTP(req.user._id);
 
         return res.status(200).json({
             success: true,
-            message: "OTP sent to your new email"
+            message: "Verification OTP sent to your current email"
         });
     } catch (error) {
         return res.status(400).json({
@@ -192,14 +178,10 @@ const requestEmailChangeController = async (req, res) => {
     }
 };
 
-
-//-----------------------------------------------------------------
-// Verify Email Change OTP
-
-const verifyEmailChangeController = async (req, res) => {
+// Step 2: Verify Current Email OTP
+const verifyCurrentEmailChangeOTPController = async (req, res) => {
     try {
         const { otp } = req.body;
-
         if (!otp || !/^\d{6}$/.test(otp)) {
             return res.status(400).json({
                 success: false,
@@ -207,7 +189,57 @@ const verifyEmailChangeController = async (req, res) => {
             });
         }
 
-        const user = await verifyEmailChangeOTP(req.user._id, otp);
+        await verifyCurrentEmailOTP(req.user._id, otp);
+
+        return res.status(200).json({
+            success: true,
+            message: "Current email verified successfully"
+        });
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// Step 3: Send OTP to New Email (after current email is verified)
+const requestNewEmailChangeOTPController = async (req, res) => {
+    try {
+        const { newEmail } = req.body;
+        if (!newEmail || !/^[a-zA-Z][a-zA-Z0-9._%+-]{4,}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(newEmail.trim())) {
+            return res.status(400).json({
+                success: false,
+                message: "Please enter a valid new email address"
+            });
+        }
+
+        await generateNewEmailOTP(req.user._id, newEmail);
+
+        return res.status(200).json({
+            success: true,
+            message: "Verification OTP sent to your new email"
+        });
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// Step 4: Verify New Email OTP and Update Email
+const verifyNewEmailChangeOTPController = async (req, res) => {
+    try {
+        const { otp } = req.body;
+        if (!otp || !/^\d{6}$/.test(otp)) {
+            return res.status(400).json({
+                success: false,
+                message: "Please enter a valid 6-digit OTP"
+            });
+        }
+
+        const user = await verifyNewEmailOTP(req.user._id, otp);
 
         return res.status(200).json({
             success: true,
@@ -215,7 +247,11 @@ const verifyEmailChangeController = async (req, res) => {
             user: {
                 id: user._id,
                 name: user.name,
-                email: user.email
+                email: user.email,
+                phone: user.phone,
+                role: user.role,
+                profileImageUrl: user.profileImageUrl,
+                authProvider: user.authProvider
             }
         });
     } catch (error) {
@@ -226,17 +262,14 @@ const verifyEmailChangeController = async (req, res) => {
     }
 };
 
-
 //--------------------------------------------------------
 //Forgot Password -  requests and sends a reset OTP
 
 const forgotPassword = async (req, res) => {
-    try 
-    {
+    try {
         const { email } = req.body
 
-        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) 
-        {
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             return res.status(400).json({
                 success: false,
                 message: "Please provide a valid email address"
@@ -249,10 +282,8 @@ const forgotPassword = async (req, res) => {
             success: true,
             message: "If the email is registered, a password reset OTP has been sent"
         })
-    } catch (error) 
-    {
-        if (error.message === "This account was created using Google. Please manage your account through your Google Account.") 
-        {
+    } catch (error) {
+        if (error.message === "This account was created using Google. Please manage your account through your Google Account.") {
             return res.status(400).json({
                 success: false,
                 message: error.message
@@ -272,11 +303,9 @@ const forgotPassword = async (req, res) => {
 //Verify OTP - Password Reset
 
 const verifyPasswordReset = async (req, res) => {
-    try 
-    {
+    try {
         const { email, otp } = req.body
-        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !otp || !/^\d{6}$/.test(otp))
-        {
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !otp || !/^\d{6}$/.test(otp)) {
             return res.status(400).json({
                 success: false,
                 message: "Valid email and 6-digit OTP are required"
@@ -287,8 +316,7 @@ const verifyPasswordReset = async (req, res) => {
             success: true,
             message: "OTP verified successfully"
         })
-    } catch (error) 
-    {
+    } catch (error) {
         const clientErrors = [
             "Password reset OTP not found or expired",
             "OTP has expired. Please request a new OTP.",
@@ -315,23 +343,28 @@ const verifyPasswordReset = async (req, res) => {
 //---------------------------------------------------------------
 //Password Reset after OTP verification.
 
-const  resetPasswordController = async (req, res) => {
+const resetPasswordController = async (req, res) => {
     try {
         const { email, newPassword } = req.body
 
-        if (!email || !newPassword || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) 
-        {
+        if (!email || !newPassword || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             return res.status(400).json({
                 success: false,
                 message: "Valid email and new password are required"
             })
         }
 
-        if (typeof newPassword !== "string" || newPassword.length < 8) 
-        {
+        // Validates password length, uppercase letter, number and special symbol
+        if (
+            typeof newPassword !== "string" ||
+            newPassword.length < 8 ||
+            !/[A-Z]/.test(newPassword) ||
+            !/[0-9]/.test(newPassword) ||
+            !/[^A-Za-z0-9]/.test(newPassword)
+        ) {
             return res.status(400).json({
                 success: false,
-                message: "Password must be at least 8 characters long"
+                message: "Password must contain at least 8 characters, one uppercase letter, one number and one special symbol"
             })
         }
 
@@ -341,8 +374,7 @@ const  resetPasswordController = async (req, res) => {
             success: true,
             message: "Password reset successful. Please login with your new password."
         })
-    } catch (error) 
-    {
+    } catch (error) {
         const clientErrors = [
             "Please verify your password reset OTP first",
             "Password reset session has expired. Please request a new OTP.",
@@ -350,7 +382,7 @@ const  resetPasswordController = async (req, res) => {
             "This account was created using Google. Please manage your account through your Google Account."
         ]
 
-        if(clientErrors.includes(error.message)) {
+        if (clientErrors.includes(error.message)) {
             return res.status(400).json({
                 success: false,
                 message: error.message
@@ -368,16 +400,23 @@ const  resetPasswordController = async (req, res) => {
 //--------------------------------------------------------------
 // Change Password
 
-// Change Password
 const changePasswordController = async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
 
-        if (!currentPassword || !newPassword || newPassword.length < 8) {
+        // Validates current password and new password requirements
+        if (
+            !currentPassword ||
+            typeof newPassword !== "string" ||
+            newPassword.length < 8 ||
+            !/[A-Z]/.test(newPassword) ||
+            !/[0-9]/.test(newPassword) ||
+            !/[^A-Za-z0-9]/.test(newPassword)
+        ) {
             return res.status(400).json({
                 success: false,
-                message: "Current password and a new password of at least 8 characters are required"
-            });
+                message: "Current password and a valid new password are required. New password must contain at least 8 characters, one uppercase letter, one number and one special symbol"
+            })
         }
 
         await changePasswordService(
@@ -403,11 +442,9 @@ const changePasswordController = async (req, res) => {
 //Login - Local User and sends the JWT through a secure HttpOnly cookie.
 
 const login = async (req, res) => {
-    try 
-    {
+    try {
         const validationError = validateLogin(req.body || {})
-        if (validationError) 
-        {
+        if (validationError) {
             return res.status(400).json({
                 success: false,
                 message: validationError
@@ -441,13 +478,12 @@ const login = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 phone: user.phone,
-                role: user.role
+                role: user.role,
+                authProvider: user.authProvider
             }
         })
-    } catch (error) 
-    {
-        if (error.message === "Invalid email or password") 
-        {
+    } catch (error) {
+        if (error.message === "Invalid email or password") {
             return res.status(401).json({
                 success: false,
                 message: error.message
@@ -463,8 +499,7 @@ const login = async (req, res) => {
             })
         }
 
-        if (error.message === "Your account has been blocked. Please contact support.") 
-        {
+        if (error.message === "Your account has been blocked. Please contact support.") {
             return res.status(403).json({
                 success: false,
                 message: error.message
@@ -517,7 +552,8 @@ const googleLogin = async (req, res) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                authProvider: user.authProvider
             }
         })
     } catch (error) {
@@ -637,7 +673,7 @@ const refreshUserTokenController = async (req, res) => {
 
 
 //--------------------------------------------------------
-module.exports = { 
+module.exports = {
     register,
     verifyEmailOTP,
     resendEmailOTP,
@@ -648,7 +684,9 @@ module.exports = {
     verifyPasswordReset,
     resetPasswordController,
     refreshUserTokenController,
-    requestEmailChangeController,
-    verifyEmailChangeController,
+    requestCurrentEmailChangeOTPController,
+    verifyCurrentEmailChangeOTPController,
+    requestNewEmailChangeOTPController,
+    verifyNewEmailChangeOTPController,
     changePasswordController
 };

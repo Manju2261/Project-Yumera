@@ -1,84 +1,177 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import api from '../../../services/api'
 import ConfirmationModal from '../../../components/common/ConfirmationModal'
+import ProfileLayout from '../../userProfile/components/ProfileLayout'
+import '../../userProfile/pages/ProfilePage.css'
 
 // Address list page
 function AddressListPage() {
-    const [addresses, setAddresses] = useState([
-        {
-            id: 1,
-            name: 'Home',
-            address: 'Koyilandy, Kozhikode, Kerala',
-            phone: '9876543210'
-        },
-        {
-            id: 2,
-            name: 'Office',
-            address: 'Kozhikode, Kerala',
-            phone: '9876543210'
-        }
-    ])
+    const [addresses, setAddresses] = useState([])
+    const [isLoading, setIsLoading] = useState(true)
+    const [serverError, setServerError] = useState('')
 
     const [showModal, setShowModal] = useState(false)
     const [selectedAddressId, setSelectedAddressId] = useState(null)
 
-    // Open confirmation modal for address deletion
+    // Fetches the user's saved addresses from the backend
+    useEffect(() => {
+        const fetchAddresses = async () => {
+            try {
+                const response = await api.get('/user/profile')
+
+                if (response.data.success) {
+                    setAddresses(response.data.user.addresses || [])
+                }
+            } catch (error) {
+                setServerError(
+                    error.response?.data?.message ||
+                    'Unable to load addresses. Please try again.'
+                )
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        fetchAddresses()
+    }, [])
+
     const deleteAddress = (id) => {
         setSelectedAddressId(id)
         setShowModal(true)
     }
 
-    // Delete selected address after confirmation
-    const confirmDelete = () => {
-        setAddresses(prevAddresses =>
-            prevAddresses.filter(address => address.id !== selectedAddressId)
-        )
+    // Deletes the selected address
+    const confirmDelete = async () => {
+        try {
+            setServerError('')
 
-        setShowModal(false)
-        setSelectedAddressId(null)
+            const response = await api.delete(
+                `/user/addresses/${selectedAddressId}`
+            )
+
+            if (response.data.success) {
+                setAddresses(response.data.addresses || [])
+                setShowModal(false)
+                setSelectedAddressId(null)
+            }
+        } catch (error) {
+            setServerError(
+                error.response?.data?.message ||
+                'Unable to delete address. Please try again.'
+            )
+        }
     }
 
-    // Close modal without deleting the address
+    // Sets default address
+    const setDefaultAddress = async (id) => {
+        try {
+            setServerError('')
+
+            const response = await api.patch(
+                `/user/addresses/${id}/default`
+            )
+
+            if (response.data.success) {
+                setAddresses(response.data.addresses || [])
+            }
+        } catch (error) {
+            setServerError(
+                error.response?.data?.message ||
+                'Unable to set default address. Please try again.'
+            )
+        }
+    }
+
     const cancelDelete = () => {
         setShowModal(false)
         setSelectedAddressId(null)
     }
 
     return (
-        <div className="profile-page">
-            <h1>My Addresses</h1>
+        <ProfileLayout
+            title="My Addresses"
+            subtitle="Manage your delivery addresses for seamless shopping and checkout"
+        >
+            <div className="addresses-container">
+                {serverError && (
+                    <p className="error-message">{serverError}</p>
+                )}
 
-            <Link to="/address/add">Add New Address</Link>
-
-            {addresses.map((address) => (
-                <div className="profile-details" key={address.id}>
-                    <h2>{address.name}</h2>
-                    <p>{address.address}</p>
-                    <p>Phone: {address.phone}</p>
-
-                    <div className="address-actions">
-                        <Link to={`/address/edit/${address.id}`}>Edit</Link>
-
-                        <button
-                            type="button"
-                            onClick={() => deleteAddress(address.id)}
-                        >
-                            Delete
-                        </button>
-                    </div>
+                {/* Section Header */}
+                <div className="addresses-header">
+                    <h2>Saved Addresses</h2>
+                    <Link to="/address/add" className="add-new-address-btn">
+                        + Add New Address
+                    </Link>
                 </div>
-            ))}
 
-            {addresses.length === 0 && <p>No addresses found.</p>}
+                {isLoading ? (
+                    <p className="profile-loading-text">Loading addresses...</p>
+                ) : addresses.length === 0 ? (
+                    <div className="empty-addresses-box">
+                        <p>You haven't saved any delivery addresses yet.</p>
+                        <Link to="/address/add" className="add-new-address-btn">
+                            + Add Your First Address
+                        </Link>
+                    </div>
+                ) : (
+                    <div className="addresses-grid">
+                        {addresses.map((address) => (
+                            <div
+                                key={address._id}
+                                className={`address-item-card ${address.isDefault ? 'is-default' : ''}`}
+                            >
+                                <div>
+                                    <div className="address-card-top">
+                                        <h3 className="address-card-name">{address.fullName}</h3>
+                                        {address.isDefault ? (
+                                            <span className="default-badge">Default</span>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                className="set-default-btn"
+                                                onClick={() => setDefaultAddress(address._id)}
+                                            >
+                                                Set as Default
+                                            </button>
+                                        )}
+                                    </div>
 
-            {showModal && (
-                <ConfirmationModal
-                    message="Are you sure you want to delete this address?"
-                    onConfirm={confirmDelete}
-                    onCancel={cancelDelete}
-                />
-            )}
-        </div>
+                                    <div className="address-card-details">
+                                        <p>{address.addressLine}</p>
+                                        <p>{address.city}, {address.state} - {address.pincode}</p>
+                                        <p className="address-card-phone">📞 {address.phone}</p>
+                                    </div>
+                                </div>
+
+                                <div className="address-card-actions">
+                                    <Link to={`/address/edit/${address._id}`} className="addr-edit-link">
+                                        Edit ✏️
+                                    </Link>
+                                    <button
+                                        type="button"
+                                        className="addr-delete-btn"
+                                        onClick={() => deleteAddress(address._id)}
+                                    >
+                                        Delete 🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* Delete Confirmation Modal */}
+                {showModal && (
+                    <ConfirmationModal
+                        message="Are you sure you want to delete this address?"
+                        onConfirm={confirmDelete}
+                        onCancel={cancelDelete}
+                    />
+                )}
+            </div>
+        </ProfileLayout>
     )
 }
 

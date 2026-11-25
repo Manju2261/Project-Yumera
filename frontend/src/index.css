@@ -1,4 +1,3 @@
-
 /* Global styles for YUMERA */
 * {
     box-sizing: border-box;
@@ -14,7 +13,7 @@ body {
     min-width: 320px;
     min-height: 100vh;
     font-family: 'Segoe UI', Roboto, sans-serif;
-    background: #faf8f4;
+    background: #EBF3FA;
     color: #102a43;
     overflow-y: auto;
 }

@@ -1,9 +1,24 @@
 import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 
-// Reusable OTP verification component
-function OTPVerification({ onVerify, onResend }) {
-    const [seconds, setSeconds] = useState(60)
+//-------------------------------------------------------------------------
+// Receives verification status and backend error from the parent page
+
+function OTPVerification({ onVerify, onResend, isLoading, serverError }) {
+    // Calculates remaining seconds based on stored expiry timestamp in sessionStorage
+    const [seconds, setSeconds] = useState(() => {
+        const storedExpiry = sessionStorage.getItem('yumera_otp_expiry')
+        if (storedExpiry) {
+            const remaining = Math.max(0, Math.ceil((parseInt(storedExpiry, 10) - Date.now()) / 1000))
+            if (remaining > 0) {
+                return remaining
+            }
+        }
+        // If expired or fresh visit, start fresh 60s
+        const newExpiry = Date.now() + 60 * 1000
+        sessionStorage.setItem('yumera_otp_expiry', newExpiry.toString())
+        return 60
+    })
 
     const {
         register,
@@ -13,10 +28,17 @@ function OTPVerification({ onVerify, onResend }) {
 
     const otpRefs = useRef([])
 
-    // Handle OTP countdown timer
+    // Countdown interval recalculating from stored expiry
     useEffect(() => {
         const timer = setInterval(() => {
-            setSeconds(prev => prev > 0 ? prev - 1 : 0)
+            const storedExpiry = sessionStorage.getItem('yumera_otp_expiry')
+            if (storedExpiry) {
+                const remaining = Math.max(0, Math.ceil((parseInt(storedExpiry, 10) - Date.now()) / 1000))
+                setSeconds(remaining)
+                if (remaining <= 0) {
+                    clearInterval(timer)
+                }
+            }
         }, 1000)
 
         return () => clearInterval(timer)
@@ -28,16 +50,21 @@ function OTPVerification({ onVerify, onResend }) {
         onVerify(otp)
     }
 
-    // Handle OTP resend
-    const resendOTP = () => {
-        onResend()
-        setSeconds(60)
+    // Resets the countdown and updates stored expiry only when OTP resend succeeds
+    const resendOTP = async () => {
+        const success = await onResend()
+
+        if (success) {
+            const newExpiry = Date.now() + 60 * 1000
+            sessionStorage.setItem('yumera_otp_expiry', newExpiry.toString())
+            setSeconds(60)
+        }
     }
 
     return (
         <div>
             <form onSubmit={handleSubmit(onSubmit)}>
-                <label>Enter OTP</label>
+                <label style={{ textAlign: 'center', display: 'block' }}>Enter OTP</label>
 
                 <div className="otp-inputs">
                     {[1, 2, 3, 4, 5, 6].map((number) => {
@@ -51,6 +78,8 @@ function OTPVerification({ onVerify, onResend }) {
                                 key={number}
                                 type="text"
                                 maxLength={1}
+                                inputMode="numeric"
+                                autoComplete="one-time-code"
                                 {...field}
                                 ref={(element) => {
                                     field.ref(element)
@@ -61,6 +90,11 @@ function OTPVerification({ onVerify, onResend }) {
 
                                     if (event.target.value && number < 6) {
                                         otpRefs.current[number].focus()
+                                    }
+                                }}
+                                onKeyDown={(event) => {
+                                    if (event.key === 'Backspace' && !event.target.value && number > 1) {
+                                        otpRefs.current[number - 2]?.focus()
                                     }
                                 }}
                             />
@@ -75,23 +109,35 @@ function OTPVerification({ onVerify, onResend }) {
                     </p>
                 )}
 
-                <button type="submit">VERIFY OTP</button>
+                {/* Displays backend verification or resend errors */}
+                {serverError && (
+                    <p className="error-message">{serverError}</p>
+                )}
+
+                {/* Disables verification while the backend request is processing */}
+                <button type="submit" disabled={isLoading}>
+                    {isLoading ? 'VERIFYING...' : 'VERIFY OTP →'}
+                </button>
             </form>
 
-            <p>
-                Didn't receive OTP?{' '}
-                <button
-                    type="button"
-                    disabled={seconds > 0}
-                    onClick={resendOTP}
-                >
-                    Resend OTP
-                </button>
-            </p>
-
-            <p>
-                {seconds > 0 && `Resend available in ${seconds} seconds`}
-            </p>
+            <div className="otp-resend-wrapper">
+                {seconds > 0 ? (
+                    <p className="otp-timer">
+                        Resend OTP in <span>{seconds}s</span>
+                    </p>
+                ) : (
+                    <p className="otp-resend-text">
+                        Didn't receive the OTP?{' '}
+                        <button
+                            type="button"
+                            className="resend-link-btn"
+                            onClick={resendOTP}
+                        >
+                            Resend OTP
+                        </button>
+                    </p>
+                )}
+            </div>
         </div>
     )
 }

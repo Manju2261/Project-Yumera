@@ -1,4 +1,3 @@
-
 /* Profile page */
 .profile-page {
   max-width: 700px;
@@ -41,6 +40,14 @@
   background: #102a43;
   color: white;
   font-size: 40px;
+}
+
+/* Displays the uploaded profile image properly */
+.profile-image img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 /* Profile links */
@@ -219,4 +226,491 @@
 .address-form-actions button:hover,
 .address-form-actions a:hover {
   background: #1f4e79;
+}
+
+/* Personal Info Card */
+.profile-card-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.profile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.profile-card-header h2 {
+  font-family: Georgia, serif;
+  font-size: 20px;
+  color: #102a43;
+  margin: 0;
+  font-weight: 600;
+}
+
+.profile-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: #175672 !important;
+  color: #ffffff !important;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.profile-edit-btn:hover {
+  background: #102a43 !important;
+}
+
+/* Info Grid */
+.profile-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+}
+
+.info-value {
+  font-size: 14px;
+  color: #102a43;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Address Box */
+.profile-address-box {
+  background: #faf8f4;
+  border-radius: 12px;
+  padding: 18px 20px;
+  border: 1px solid #e2e8f0;
+  margin-top: 6px;
+}
+
+.profile-address-box h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #102a43;
+  margin: 0 0 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.badge-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #ebf3fa;
+  color: #175672;
+}
+
+.profile-address-box p {
+  margin: 3px 0;
+  font-size: 13px;
+  color: #475569;
+}
+
+.manage-addr-link {
+  display: inline-block;
+  margin-top: 10px;
+  color: #175672 !important;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  background: none !important;
+  padding: 0 !important;
+}
+
+.manage-addr-link:hover {
+  text-decoration: underline;
+}
+
+/* Security notice */
+.profile-security-notice {
+  background: #ebf3fa;
+  border-left: 4px solid #175672;
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  font-size: 13px;
+  color: #175672;
+  margin-top: 8px;
+}
+
+.profile-loading-text {
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
+  padding: 30px;
+}
+
+/* Edit Profile Form Styles */
+.edit-profile-card {
+  max-width: 540px;
+}
+
+.avatar-upload-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.avatar-preview-box {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #175672;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 600;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(23, 86, 114, 0.2);
+}
+
+.avatar-preview-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-upload-info h4 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  color: #102a43;
+}
+
+.avatar-upload-info p {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.file-input-label {
+  display: inline-block;
+  padding: 6px 14px;
+  background: #ebf3fa;
+  color: #175672;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.file-input-label:hover {
+  background: #dceaf7;
+}
+
+.edit-profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.edit-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.edit-form-field label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #102a43;
+}
+
+.edit-form-field input {
+  height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.edit-form-field input:focus {
+  border-color: #175672;
+}
+
+.edit-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.profile-save-btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  background: #175672 !important;
+  color: #ffffff !important;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.profile-save-btn:hover {
+  background: #102a43 !important;
+}
+
+.profile-cancel-btn {
+  padding: 9px 20px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff !important;
+  color: #64748b !important;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.profile-cancel-btn:hover {
+  background: #f1f5f9 !important;
+  color: #102a43 !important;
+}
+
+/* Address List Page Styles */
+.addresses-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.addresses-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 20px;
+}
+
+.addresses-header h2 {
+  font-family: Georgia, serif;
+  font-size: 20px;
+  color: #102a43;
+  margin: 0;
+  font-weight: 600;
+}
+
+.add-new-address-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 8px;
+  background: #175672 !important;
+  color: #ffffff !important;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.add-new-address-btn:hover {
+  background: #102a43 !important;
+}
+
+/* Addresses Grid */
+.addresses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.address-item-card {
+  background: #faf8f4;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 160px;
+  transition: all 0.2s;
+}
+
+.address-item-card.is-default {
+  border-color: #175672;
+  box-shadow: 0 2px 8px rgba(23, 86, 114, 0.08);
+}
+
+.address-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.address-card-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #102a43;
+  margin: 0;
+}
+
+.default-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #ebf3fa;
+  color: #175672;
+}
+
+.set-default-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.set-default-btn:hover {
+  color: #175672;
+}
+
+.address-card-details {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+  margin: 6px 0 14px;
+}
+
+.address-card-details p {
+  margin: 2px 0;
+}
+
+.address-card-phone {
+  color: #64748b !important;
+  margin-top: 4px !important;
+}
+
+.address-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.addr-edit-link {
+  font-size: 12px;
+  font-weight: 600;
+  color: #175672 !important;
+  text-decoration: none;
+  background: none !important;
+  padding: 0 !important;
+}
+
+.addr-edit-link:hover {
+  text-decoration: underline;
+}
+
+.addr-delete-btn {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ef4444 !important;
+  background: none !important;
+  border: none !important;
+  cursor: pointer;
+  padding: 0 !important;
+}
+
+.addr-delete-btn:hover {
+  text-decoration: underline;
+}
+
+.empty-addresses-box {
+  padding: 40px 20px;
+  text-align: center;
+  color: #64748b;
+  background: #faf8f4;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e1;
+}
+
+.empty-addresses-box p {
+  margin: 0 0 16px;
+  font-size: 14px;
+}
+
+/* Form error messages in profile & address pages */
+.error-message {
+  color: #dc2626;
+  font-size: 11px;
+  margin: 4px 0 0;
+  font-weight: 500;
+  display: block;
+}
+
+/* Password wrapper & eye toggle button in profile forms */
+.edit-form-field .password-input-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.edit-form-field .password-input-wrapper input {
+  width: 100%;
+  padding-right: 42px !important;
+  box-sizing: border-box;
+}
+
+.edit-form-field .password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent !important;
+  border: none !important;
+  color: #64748b !important;
+  cursor: pointer;
+  padding: 4px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+  z-index: 2;
+}
+
+.edit-form-field .password-toggle-btn:hover {
+  color: #102a43 !important;
 }

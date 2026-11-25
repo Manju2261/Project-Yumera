@@ -2,22 +2,22 @@
 .signup-form {
   width: 100%;
   max-width: 480px;
-  margin: 0 auto;
+  margin: auto;
 }
 
 .signup-form h1 {
   margin: 0;
   color: #102a43;
-  letter-spacing: 5px;
+  letter-spacing: 4px;
   font-family: Georgia, serif;
-  font-size: 28px;
+  font-size: 22px;
 }
 
 .signup-form h2 {
-  margin: 8px 0 4px;
+  margin: 4px 0 2px;
   color: #102a43;
   font-family: Georgia, serif;
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 400;
 }
 
@@ -33,7 +33,7 @@
   gap: 1px;
 }
 
-.signup-form form > label {
+.signup-form form>label {
   margin-top: 8px;
   margin-bottom: 4px;
   color: #102a43;
@@ -55,23 +55,26 @@
 
 .signup-form button {
   margin-top: 5px;
-  padding: 9px;
+  padding: 10px;
   border: none;
-  border-radius: 8px;
-  background: #102a43;
+  border-radius: 6px;
+  background: #175672;
   color: white;
   cursor: pointer;
   font-size: 12px;
+  font-weight: 600;
   letter-spacing: 1.5px;
+  transition: background 0.2s ease;
 }
 
 .signup-form button:hover {
-  background: #1f4e79;
+  background: #102A43;
 }
+
 /* Center the headings and descriptions */
-.signup-form > h1,
-.signup-form > h2,
-.signup-form > p {
+.signup-form>h1,
+.signup-form>h2,
+.signup-form>p {
   text-align: center;
 }
 
@@ -79,10 +82,28 @@
 .auth-divider {
   display: flex;
   align-items: center;
+  text-align: center;
+  margin: 10px 0;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.auth-divider span {
+  padding: 0 10px;
+}
+
+.google-login-wrapper {
+  display: flex;
   justify-content: center;
-  margin: 12px 0;
-  color: #64748b;
-  font-size: 12px;
+  width: 100%;
+  margin: 4px 0 8px;
 }
 
 .google-button {
@@ -104,17 +125,138 @@
   display: flex;
   gap: 10px;
   justify-content: center;
+  margin: 12px 0 6px;
 }
 
 .otp-inputs input {
-  width: 42px !important;
-  height: 45px !important;
+  width: 46px !important;
+  height: 48px !important;
   text-align: center;
-  font-size: 18px !important;
+  font-size: 20px !important;
+  font-weight: 600;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-/* Disabled state for Resend OTP button */
+.otp-inputs input:focus {
+  border-color: #175672 !important;
+  box-shadow: 0 0 0 2px rgba(23, 86, 114, 0.15);
+  outline: none;
+}
+
+/* OTP resend timer and link */
+.otp-resend-wrapper {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.otp-timer {
+  color: #64748b;
+  font-size: 13px;
+  margin: 0;
+}
+
+.otp-timer span {
+  color: #175672;
+  font-weight: 600;
+}
+
+.otp-resend-text {
+  color: #64748b;
+  font-size: 13px;
+  margin: 0;
+}
+
+.resend-link-btn {
+  background: none !important;
+  border: none !important;
+  color: #175672 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  padding: 0 !important;
+  margin: 0 0 0 4px !important;
+  letter-spacing: normal !important;
+  text-decoration: underline;
+  display: inline !important;
+  width: auto !important;
+}
+
+.resend-link-btn:hover {
+  color: #102a43 !important;
+}
+
+/* Disabled state for buttons */
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Forgot password link styling */
+.forgot-password-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin: 4px 0 10px;
+}
+
+.forgot-password-link {
+  color: #175672;
+  font-size: 11px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.forgot-password-link:hover {
+  text-decoration: underline;
+}
+
+/* Bottom auth signin / signup redirect link */
+.auth-signin {
+  margin-top: 14px !important;
+  text-align: center;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.auth-signin a {
+  color: #175672;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-signin a:hover {
+  text-decoration: underline;
+}
+
+/* Password wrapper & eye toggle button */
+.password-input-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  padding-right: 38px !important;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 8px;
+  background: transparent !important;
+  border: none !important;
+  color: #64748b !important;
+  cursor: pointer;
+  padding: 4px !important;
+  margin-top: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+  color: #102a43 !important;
+  background: transparent !important;
 }
