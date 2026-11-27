@@ -1,17 +1,14 @@
-// Admin user management requests.
 const {
     adminBlockUserService,
     adminUnblockUserService,
     adminGetAllUsersService
 } = require("../adminServices/adminUserService")
 
-
 //--------------------------------------------------------
 // Blocking a user.
 
 const adminBlockUserController = async (req, res) => {
-    try 
-    {
+    try {
         const user = await adminBlockUserService(req.params.userId)
 
         return res.status(200).json({
@@ -26,7 +23,6 @@ const adminBlockUserController = async (req, res) => {
         })
     }
 }
-
 
 //--------------------------------------------------------
 // Unblocking a user.
@@ -48,13 +44,11 @@ const adminUnblockUserController = async (req, res) => {
     }
 }
 
-
 //--------------------------------------------------------
 // Fetching users with pagination and search.
 
 const adminGetAllUsersController = async (req, res) => {
-    try 
-    {
+    try {
         const page = Math.max(1, parseInt(req.query.page) || 1)
         const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 10))
         const search = (req.query.search || "").trim()
@@ -65,15 +59,13 @@ const adminGetAllUsersController = async (req, res) => {
             success: true,
             ...result
         })
-    } catch (error) 
-    {
+    } catch (error) {
         return res.status(500).json({
             success: false,
             message: "Failed to fetch users"
         })
     }
 }
-
 
 //--------------------------------------------------------
 

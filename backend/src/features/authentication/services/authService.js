@@ -432,7 +432,7 @@ const verifyOTP = async (email, enteredOTP) => {
         throw new Error("OTP not found or expired")
     }
 
-    // Checks whether the registration OTP has expired.
+    // Registration OTP has expired.
     if (otpRecord.expiresAt < new Date()) {
         await EmailOTP.deleteOne({ email: normalizedEmail })
         throw new Error("OTP has expired. Please request a new OTP.")
@@ -653,7 +653,7 @@ const logoutUser = async (refreshToken) => {
             await user.save()
         }
     } catch (error) {
-        // Invalid or expired refresh tokens cannot be reused.
+        // Expired refresh token cannot be reused.
         return
     }
 }

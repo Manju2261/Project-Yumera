@@ -32,8 +32,7 @@ api.interceptors.response.use(
                 requestUrl.startsWith('/auth/change-password') ||
                 requestUrl.startsWith('/auth/change-email/')
 
-            if (isAdminRequest || isUserRequest) 
-            {
+            if (isAdminRequest || isUserRequest) {
                 originalRequest._retry = true
 
                 try {
@@ -49,7 +48,6 @@ api.interceptors.response.use(
                 }
             }
         }
-
         return Promise.reject(error)
     }
 )

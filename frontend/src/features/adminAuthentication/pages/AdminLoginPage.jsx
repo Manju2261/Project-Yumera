@@ -36,7 +36,6 @@ function AdminLoginPage() {
             })
 
             if (response.data.success) {
-                // Stores authenticated admin details in Redux
                 dispatch(setAdminCredentials(response.data.admin))
 
                 navigate('/admin/users', { replace: true })
@@ -52,13 +51,18 @@ function AdminLoginPage() {
     }
 
     return (
-        <AuthLayout>
-            <div className="signup-form">
+        <AuthLayout
+            isAdmin={true}
+            tagline="ADMINISTRATION CONSOLE"
+            title="Secure Operations & Management Portal"
+            subtext="AUTHORIZED ACCESS ONLY"
+        >
+            <div className="signup-form admin-login-form">
                 <h1>YUMERA</h1>
                 <p>The Essence of You.</p>
-
-                <h2>Admin Sign In</h2>
-                <p>Login to your admin account.</p>
+                <div className="admin-badge-pill">🛡️ ADMIN PORTAL</div>
+                <h2>Control Center Access</h2>
+                <p>Sign in with your administrator credentials.</p>
 
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <label>Email Address</label>
@@ -118,19 +122,16 @@ function AdminLoginPage() {
                     </div>
                     <p className="error-message">{errors.password?.message}</p>
 
-                    {/* Displays admin login errors from the backend */}
                     {serverError && (
                         <p className="error-message">{serverError}</p>
                     )}
 
-                    {/* Disables the button while admin login is processing */}
-                    <button type="submit" disabled={isLoading}>
-                        {isLoading ? 'LOGGING IN...' : 'ADMIN LOGIN →'}
+                    <button type="submit" className="admin-submit-btn" disabled={isLoading}>
+                        {isLoading ? 'AUTHENTICATING...' : 'AUTHENTICATE & ENTER →'}
                     </button>
                 </form>
-
                 <p className="auth-signin">
-                    <Link to="/">← Back to Home</Link>
+                    <Link to="/">← Return to Storefront</Link>
                 </p>
             </div>
         </AuthLayout>

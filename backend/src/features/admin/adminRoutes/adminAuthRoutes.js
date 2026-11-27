@@ -1,7 +1,7 @@
 // Admin authentication API routes.
 
 const express = require("express")
-const { 
+const {
     adminLoginController,
     adminGetProfileController,
     adminRefreshTokenController,
@@ -9,7 +9,6 @@ const {
 } = require("../adminControllers/adminAuthController")
 
 const adminAuthMiddleware = require("../adminMiddleware/adminAuthMiddleware")
-
 const adminAuthRoutes = express.Router()
 
 adminAuthRoutes

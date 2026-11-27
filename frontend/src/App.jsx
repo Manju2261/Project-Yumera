@@ -33,7 +33,7 @@ import {
 
 
 //--------------------------------------------------------------
-// Protects pages that require an authenticated user.
+// Protected User Route.
 
 function ProtectedUserRoute({ children, sessionLoading, isAuthenticated }) {
     if (sessionLoading) {
@@ -52,7 +52,7 @@ function GuestRoute({ children, sessionLoading, isAuthenticated, redirectTo = "/
     return isAuthenticated ? <Navigate to={redirectTo} replace /> : children
 }
 
-// Protects pages that require an authenticated admin.
+// Protected Admin Route.
 function ProtectedAdminRoute({ children, sessionLoading, isAdminAuthenticated }) {
     if (sessionLoading) {
         return <p>Loading...</p>

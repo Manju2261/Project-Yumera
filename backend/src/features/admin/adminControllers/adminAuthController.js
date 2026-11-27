@@ -1,5 +1,4 @@
-
-const { 
+const {
     adminLoginService,
     refreshAdminAccessToken,
     adminLogoutService
@@ -9,10 +8,10 @@ const adminLoginValidator = require("../adminValidators/adminLoginValidator")
 
 //---------------------------------------------------------------------------------
 // Admin login
+
 const adminLoginController = async (req, res) => {
     try {
         const { email, password } = req.body
-
         const { errors, isValid } = adminLoginValidator(email, password)
 
         if (!isValid) {
@@ -55,7 +54,7 @@ const adminLoginController = async (req, res) => {
 
 
 //---------------------------------------------------------------------------------
-//Currently Authenticated Admin Details.
+//Current Admin Details.
 
 const adminGetProfileController = (req, res) => {
     return res.status(200).json({
@@ -76,7 +75,6 @@ const adminGetProfileController = (req, res) => {
 const adminRefreshTokenController = async (req, res) => {
     try {
         const refreshToken = req.cookies?.adminRefreshToken
-
         const { accessToken, refreshToken: newRefreshToken } =
             await refreshAdminAccessToken(refreshToken)
 
@@ -99,8 +97,7 @@ const adminRefreshTokenController = async (req, res) => {
             message: "Admin token refreshed successfully"
         })
 
-    } catch (error) 
-    {
+    } catch (error) {
         res.clearCookie("adminAccessToken", {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
@@ -120,14 +117,12 @@ const adminRefreshTokenController = async (req, res) => {
     }
 }
 
-
 //-----------------------------------------------------------
 // Admin Logout
 
 const adminLogoutController = async (req, res) => {
     try {
         const refreshToken = req.cookies?.adminRefreshToken
-
         await adminLogoutService(refreshToken)
 
         res.clearCookie("adminAccessToken", {
@@ -155,10 +150,9 @@ const adminLogoutController = async (req, res) => {
     }
 }
 
-
 //---------------------------------------------------------------------------------
 
-module.exports = { 
+module.exports = {
     adminLoginController,
     adminGetProfileController,
     adminRefreshTokenController,

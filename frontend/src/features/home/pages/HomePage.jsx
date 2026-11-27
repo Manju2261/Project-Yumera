@@ -7,11 +7,11 @@ function HomePage() {
 
     return (
         <div className="home-container">
-            {/* 1. NAVBAR */}
+            {/* 1. Navbar */}
             <header className="navbar">
                 <Link to="/" className="navbar-logo">
                     <span className="logo-name">YUMERA</span>
-                    <span className="logo-tagline">THE ESSENCE OF YOU</span>
+                    <span className="logo-tagline">The Essence of You.</span>
                 </Link>
 
                 <nav>
@@ -38,7 +38,7 @@ function HomePage() {
                         </svg>
                     </button>
 
-                    {/* Displays the profile image for logged-in users, otherwise the default profile icon */}
+                    {/* Displays profile image */}
                     <Link
                         to={isAuthenticated ? "/profile" : "/login"}
                         aria-label="Account"
@@ -75,38 +75,33 @@ function HomePage() {
                 </div>
             </header>
 
-            {/* ===== 2. HERO SECTION ===== */}
+            {/* Hero Section*/}
             <section className="hero">
                 <div className="hero-content">
-                    {/* Shows the signup button only for guests */}
-                    {!isAuthenticated && (
-                        <Link
-                            to="/signup"
-                            className="hero-signin-btn"
-                            style={{ textDecoration: 'none', display: 'inline-block' }}
-                        >
-                            SIGN UP
-                        </Link>
-                    )}
+                    <div className="hero-tagline-wrapper">
+                        <span className="hero-tagline">DISCOVER YOUR SIGNATURE SCENT</span>
+                        <span className="hero-tagline-line"></span>
+                    </div>
 
-                    <p className="hero-tagline">MORE THAN A FRAGRANCE</p>
                     <h1 className="hero-heading">
-                        A Scent That Stays<br />With You
+                        A Fragrance<br />
+                        That Feels Like You.
                     </h1>
-                    <p className="hero-description">
-                        Timeless fragrances crafted to reflect your essence and elevate every moment.
-                    </p>
-                </div>
 
-                <div className="hero-image">
-                    <img
-                        src="https://yumera-user-uploads-2026.s3.ap-southeast-2.amazonaws.com/assets/hero-perfume.png"
-                        alt="Yumera Luxury Perfume"
-                    />
+                    <p className="hero-description">
+                        Express your individuality<br />
+                        through a scent that stays with you.
+                    </p>
+
+                    <div className="hero-cta-group">
+                        <Link to={isAuthenticated ? "/#shop" : "/signup"} className="hero-primary-btn">
+                            EXPLORE COLLECTION →
+                        </Link>
+                    </div>
                 </div>
             </section>
 
-            {/* 3. DUMMY BODY (WEEK-1)  */}
+            {/* 3. Dummy Body (WEEK-1)  */}
             <main style={{ padding: '80px 20px', textAlign: 'center', background: '#DCEAF7' }}>
                 <p style={{ fontSize: '18px', color: '#102A43', letterSpacing: '2px', margin: 0, fontWeight: 600 }}>
                     Loading...

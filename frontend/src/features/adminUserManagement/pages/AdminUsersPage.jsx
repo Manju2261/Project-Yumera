@@ -20,14 +20,12 @@ function AdminUsersPage() {
     const [currentPage, setCurrentPage] = useState(1)
     const [selectedUserId, setSelectedUserId] = useState(null)
 
-    // Fetches users whenever pagination or search changes
+    // API call
     useEffect(() => {
         let isMounted = true
-
         const loadUsers = async () => {
             try {
                 setIsLoading(true)
-
                 const response = await api.get('/admin/users', {
                     params: {
                         page: currentPage,

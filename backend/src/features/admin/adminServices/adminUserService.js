@@ -16,7 +16,6 @@ const generateAdminAccessToken = (adminId) => {
     )
 }
 
-
 //--------------------------------------------------------------
 // Generate Admin Refresh Token
 
@@ -29,7 +28,6 @@ const generateAdminRefreshToken = (adminId) => {
         }
     )
 }
-
 
 //---------------------------------------------------------
 //Admin Login
@@ -77,7 +75,6 @@ const adminLoginService = async (email, password) => {
     }
 }
 
-
 //-----------------------------------------------------------
 // Admin Logout
 
@@ -112,9 +109,7 @@ const refreshAdminAccessToken = async (refreshToken) => {
     if (!refreshToken) {
         throw new Error("Admin refresh token is required")
     }
-
     let decoded
-
     try {
         decoded = jwt.verify(
             refreshToken,
@@ -220,7 +215,6 @@ const adminUnblockUserService = async (userId) => {
 
 const adminGetAllUsersService = async (page, limit, search) => {
     const skip = (page - 1) * limit
-
     const searchFilter = search
         ? {
             $or: [
@@ -229,7 +223,6 @@ const adminGetAllUsersService = async (page, limit, search) => {
             ]
         }
         : {}
-
     const filter = {
         role: "user",
         ...searchFilter

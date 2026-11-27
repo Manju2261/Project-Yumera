@@ -15,24 +15,30 @@
 .navbar-logo {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  align-items: flex-start;
   text-decoration: none;
+  gap: 0;
+  line-height: 1;
 }
 
 .logo-name {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: 3px;
-  color: #102A43;
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: 4px;
+  color: #102a43;
+  margin: 0;
 }
 
 .logo-tagline {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 10px;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 13px;
+  font-style: italic;
   font-weight: 400;
-  letter-spacing: 2px;
-  color: #64748B;
+  letter-spacing: 0.5px;
+  color: #102a43;
+  margin-top: 2px;
+  opacity: 0.9;
 }
 
 .navbar-links {
@@ -82,107 +88,128 @@
 
 /* ----- HERO SECTION ----- */
 .hero {
+  position: relative;
+  min-height: 520px;
   display: flex;
   align-items: center;
-  padding: 80px 48px;
-  gap: 48px;
-  background: #EBF3FA;
-}
-
-.hero-signin-btn {
-  display: inline-block;
-  text-decoration: none !important;
-  width: fit-content;
-  padding: 10px 24px;
-  border: 1.5px solid #9ABEDC;
-  background: #C6DCF0;
-  color: #102A43;
-  border-radius: 4px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.hero-signin-btn:hover {
-  background: #102A43;
-  color: #FFFFFF;
-  border-color: #102A43;
-}
-
-.hero-img {
-  width: 100%;
-  max-width: 560px;
-  height: 420px;
-  object-fit: cover;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(16, 42, 67, 0.08);
+  padding: 60px 64px;
+  background-color: #faf7f2;
+  background-image:
+    linear-gradient(to right, rgba(250, 247, 242, 0.92) 0%, rgba(250, 247, 242, 0.6) 45%, rgba(250, 247, 242, 0) 70%),
+    url('https://yumera-user-uploads-2026.s3.ap-southeast-2.amazonaws.com/assets/hero-banner-clean.png');
+  background-position: right center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  overflow: hidden;
 }
 
 .hero-content {
-  flex: 1;
+  max-width: 540px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
+  z-index: 2;
+}
+
+.hero-tagline-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .hero-tagline {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 3px;
-  color: #6B9AC4;
+  color: #486581;
+  text-transform: uppercase;
   margin: 0;
+}
+
+.hero-tagline-line {
+  flex: 1;
+  max-width: 80px;
+  height: 1px;
+  background-color: #b0c4de;
 }
 
 .hero-heading {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 60px;
+  font-size: 54px;
   font-weight: 400;
-  color: #102A43;
+  color: #102a43;
   line-height: 1.15;
   margin: 0;
+  letter-spacing: -0.5px;
 }
 
 .hero-description {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 18px;
-  font-weight: 300;
-  color: #64748B;
+  font-size: 16px;
+  font-weight: 400;
+  color: #486581;
   line-height: 1.6;
   margin: 0;
-  max-width: 400px;
 }
 
-.hero-image {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.hero-image img {
-  width: 100%;
-  max-width: 560px;
-  height: 420px;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-.hero-img-placeholder {
-  width: 100%;
-  max-width: 560px;
-  height: 420px;
-  background: #E8E3D8;
-  border-radius: 8px;
+.hero-cta-group {
   display: flex;
   align-items: center;
+  gap: 24px;
+  margin-top: 10px;
+}
+
+.hero-primary-btn {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  color: #999;
-  font-size: 14px;
+  padding: 12px 28px;
+  background: #102a43;
+  color: #ffffff !important;
   font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-decoration: none !important;
+  border-radius: 24px;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(16, 42, 67, 0.2);
+}
+
+.hero-primary-btn:hover {
+  background: #175672;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(16, 42, 67, 0.25);
+}
+
+.hero-secondary-btn {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #102a43 !important;
+  text-decoration: underline !important;
+  text-underline-offset: 4px;
+  transition: color 0.2s ease;
+}
+
+.hero-secondary-btn:hover {
+  color: #175672 !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .hero {
+    padding: 60px 24px;
+    min-height: 480px;
+    background-image:
+      linear-gradient(to bottom, rgba(250, 247, 242, 0.92) 0%, rgba(250, 247, 242, 0.75) 100%),
+      url('https://yumera-user-uploads-2026.s3.ap-southeast-2.amazonaws.com/assets/hero-banner-clean.png');
+  }
+
+  .hero-heading {
+    font-size: 38px;
+  }
 }
 
 /* ----- SHARED SECTION STYLES ----- */
